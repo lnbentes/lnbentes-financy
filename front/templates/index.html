@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div id="layout-wrapper" class="flex min-h-screen bg-earth-50 dark:bg-earth-950 transition-colors duration-300 overflow-hidden hidden">
+
+    <!-- Overlay mobile (fundo escuro quando sidebar está aberta) -->
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 hidden md:hidden" aria-hidden="true"></div>
+
+    <!-- Navigation Sidebar -->
+    <aside id="sidebar" class="fixed left-0 top-0 h-full bg-white dark:bg-earth-900 border-r border-earth-200 dark:border-earth-800 transition-transform duration-300 z-50 w-64 flex flex-col -translate-x-full md:translate-x-0">
+        <div class="p-6 flex items-center gap-3">
+            <div class="w-10 h-10 bg-forest-600 rounded-xl flex items-center justify-center text-white text-xl">
+                <ion-icon name="leaf-outline"></ion-icon>
+            </div>
+            <div id="sidebar-logo-text" class="font-serif font-bold text-xl text-forest-900 dark:text-forest-100 transition-opacity duration-300">
+                BeTo's House
+            </div>
+        </div>
+
+        <nav class="flex-1 px-3 space-y-1 overflow-y-auto">
+            <button data-view="dashboard" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium text-earth-600 hover:bg-forest-50 hover:text-forest-700 dark:text-earth-400 dark:hover:bg-forest-900/20 dark:hover:text-forest-300">
+                <ion-icon name="grid-outline" class="text-xl shrink-0"></ion-icon>
+                <span class="nav-label">Dashboard</span>
+            </button>
+            <button data-view="tasks" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium text-earth-600 hover:bg-forest-50 hover:text-forest-700 dark:text-earth-400 dark:hover:bg-forest-900/20 dark:hover:text-forest-300">
+                <ion-icon name="checkbox-outline" class="text-xl shrink-0"></ion-icon>
+                <span class="nav-label">Tarefas</span>
+            </button>
+            <button data-view="finance" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium text-earth-600 hover:bg-forest-50 hover:text-forest-700 dark:text-earth-400 dark:hover:bg-forest-900/20 dark:hover:text-forest-300">
+                <ion-icon name="stats-chart-outline" class="text-xl shrink-0"></ion-icon>
+                <span class="nav-label">Financeiro</span>
+            </button>
+            <button data-view="places" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium text-earth-600 hover:bg-forest-50 hover:text-forest-700 dark:text-earth-400 dark:hover:bg-forest-900/20 dark:hover:text-forest-300">
+                <ion-icon name="location-outline" class="text-xl shrink-0"></ion-icon>
+                <span class="nav-label">Passeios</span>
+            </button>
+            <button data-view="calendar" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium text-earth-600 hover:bg-forest-50 hover:text-forest-700 dark:text-earth-400 dark:hover:bg-forest-900/20 dark:hover:text-forest-300">
+                <ion-icon name="calendar-outline" class="text-xl shrink-0"></ion-icon>
+                <span class="nav-label">Calendário</span>
+            </button>
+            <button data-view="admin" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium text-earth-600 hover:bg-forest-50 hover:text-forest-700 dark:text-earth-400 dark:hover:bg-forest-900/20 dark:hover:text-forest-300">
+                <ion-icon name="settings-outline" class="text-xl shrink-0"></ion-icon>
+                <span class="nav-label">Admin</span>
+            </button>
+        </nav>
+
+        <div class="p-4 mt-auto border-t border-earth-100 dark:border-earth-800">
+            <button id="logout-btn" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all font-medium">
+                <ion-icon name="log-out-outline" class="text-xl shrink-0"></ion-icon>
+                <span class="nav-label">Sair</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main id="main-content" class="flex-1 p-4 md:p-8 overflow-y-auto h-screen no-scrollbar transition-all duration-300 ease-in-out md:ml-64 pb-20 md:pb-8">
+        <header class="flex justify-between items-center mb-6 sticky top-0 bg-earth-50/90 dark:bg-earth-950/90 backdrop-blur-sm py-2 z-40 gap-3">
+
+            <!-- Hamburger + Logo (mobile) / Título (desktop) -->
+            <div class="flex items-center gap-2 min-w-0">
+                <button id="sidebar-toggle" class="md:hidden p-2 rounded-xl text-earth-700 dark:text-earth-200 hover:bg-earth-100 dark:hover:bg-earth-800 transition-colors shrink-0" aria-label="Abrir menu">
+                    <ion-icon name="menu-outline" class="text-2xl"></ion-icon>
+                </button>
+                <span class="md:hidden font-bold font-serif text-base text-forest-700 dark:text-forest-300 truncate">BeTo's House</span>
+                <h2 id="view-title" class="hidden md:block text-xl font-bold capitalize text-earth-800 dark:text-earth-100 truncate">Dashboard</h2>
+            </div>
+
+            <!-- Ações do header -->
+            <div class="flex items-center gap-1 sm:gap-3 shrink-0">
+                <button id="theme-toggle" class="p-2 rounded-full text-forest-600 dark:text-forest-300 hover:bg-forest-100 dark:hover:bg-forest-900 transition-colors">
+                    <ion-icon name="moon-outline" id="theme-icon" class="text-xl"></ion-icon>
+                </button>
+
+                <button class="p-2 relative rounded-full text-forest-600 dark:text-forest-300 hover:bg-forest-100 dark:hover:bg-forest-900 transition-colors">
+                    <ion-icon name="notifications-outline" class="text-xl"></ion-icon>
+                    <span class="absolute top-1.5 right-2 w-2 h-2 bg-red-500 rounded-full"></span>
+                </button>
+
+                <div class="flex items-center gap-2 border-l pl-2 sm:pl-4 border-earth-300 dark:border-earth-700">
+                    <button class="flex items-center gap-2 focus:outline-none">
+                        <span id="user-name" class="hidden sm:inline text-sm font-medium text-earth-700 dark:text-earth-200 max-w-[80px] truncate">User</span>
+                        <img id="user-avatar" src="" alt="Profile" class="w-8 h-8 rounded-full border border-forest-200 shrink-0">
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <div id="view-container" class="animate-in fade-in duration-300">
+            <!-- Content will be injected here -->
+            <div class="flex items-center justify-center h-64">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-forest-600"></div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Bottom Navigation (somente mobile/tablet) -->
+    <nav id="bottom-nav" class="fixed bottom-0 left-0 right-0 bg-white dark:bg-earth-900 border-t border-earth-200 dark:border-earth-800 flex md:hidden z-50" style="padding-bottom: env(safe-area-inset-bottom, 0px)">
+        <button data-view="dashboard" class="bottom-nav-item flex-1 flex flex-col items-center justify-center py-2 gap-0.5 text-earth-400 dark:text-earth-500 hover:text-forest-600 dark:hover:text-forest-300 transition-colors min-h-[56px]">
+            <ion-icon name="grid-outline" class="text-[22px]"></ion-icon>
+            <span class="text-[10px] font-medium">Início</span>
+        </button>
+        <button data-view="tasks" class="bottom-nav-item flex-1 flex flex-col items-center justify-center py-2 gap-0.5 text-earth-400 dark:text-earth-500 hover:text-forest-600 dark:hover:text-forest-300 transition-colors min-h-[56px]">
+            <ion-icon name="checkbox-outline" class="text-[22px]"></ion-icon>
+            <span class="text-[10px] font-medium">Tarefas</span>
+        </button>
+        <button data-view="finance" class="bottom-nav-item flex-1 flex flex-col items-center justify-center py-2 gap-0.5 text-earth-400 dark:text-earth-500 hover:text-forest-600 dark:hover:text-forest-300 transition-colors min-h-[56px]">
+            <ion-icon name="stats-chart-outline" class="text-[22px]"></ion-icon>
+            <span class="text-[10px] font-medium">Finanças</span>
+        </button>
+        <button data-view="places" class="bottom-nav-item flex-1 flex flex-col items-center justify-center py-2 gap-0.5 text-earth-400 dark:text-earth-500 hover:text-forest-600 dark:hover:text-forest-300 transition-colors min-h-[56px]">
+            <ion-icon name="location-outline" class="text-[22px]"></ion-icon>
+            <span class="text-[10px] font-medium">Passeios</span>
+        </button>
+        <button data-view="calendar" class="bottom-nav-item flex-1 flex flex-col items-center justify-center py-2 gap-0.5 text-earth-400 dark:text-earth-500 hover:text-forest-600 dark:hover:text-forest-300 transition-colors min-h-[56px]">
+            <ion-icon name="calendar-outline" class="text-[22px]"></ion-icon>
+            <span class="text-[10px] font-medium">Agenda</span>
+        </button>
+    </nav>
+</div>
+
+<!-- Login Wrapper -->
+<div id="login-wrapper" class="min-h-screen flex items-center justify-center bg-earth-50 dark:bg-earth-950 p-4">
+    <!-- Login form will be injected here by UI.js -->
+</div>
+
+<script>
+    // Controle da sidebar mobile
+    (function () {
+        function openSidebar() {
+            var sidebar = document.getElementById('sidebar');
+            var overlay = document.getElementById('sidebar-overlay');
+            if (!sidebar || !overlay) return;
+            sidebar.classList.remove('-translate-x-full');
+            sidebar.classList.add('translate-x-0');
+            overlay.classList.remove('hidden');
+        }
+        function closeSidebar() {
+            var sidebar = document.getElementById('sidebar');
+            var overlay = document.getElementById('sidebar-overlay');
+            if (!sidebar || !overlay) return;
+            sidebar.classList.add('-translate-x-full');
+            sidebar.classList.remove('translate-x-0');
+            overlay.classList.add('hidden');
+        }
+        var toggleBtn = document.getElementById('sidebar-toggle');
+        var overlayEl = document.getElementById('sidebar-overlay');
+        if (toggleBtn) toggleBtn.addEventListener('click', openSidebar);
+        if (overlayEl) overlayEl.addEventListener('click', closeSidebar);
+
+        // Fecha sidebar ao clicar em item de navegação no mobile
+        document.querySelectorAll('.nav-item').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                if (window.innerWidth < 768) closeSidebar();
+            });
+        });
+    })();
+</script>
+{% endblock %}

@@ -1,0 +1,12 @@
+.git
+.gitignore
+.vscode
+venv/
+node_modules/
+front-react/node_modules/
+front-react/dist/
+db.sqlite3
+*.pyc
+__pycache__/
+docker/
+.dockerignore
