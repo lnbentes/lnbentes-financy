@@ -163,9 +163,9 @@ REST_FRAMEWORK = {
 }
 
 SPECTACULAR_SETTINGS = {
-    'TITLE': 'BeToHome API',
-    'DESCRIPTION': 'Documentação das APIs do sistema financeiro BeToHome',
-    'VERSION': '1.0.0',
+    'TITLE': 'LnB API',
+    'DESCRIPTION': 'Documentação de APIs do sistema financeiro LnB',
+    'VERSION': '0.1.0',
     'SERVE_INCLUDE_SCHEMA': False,
     'SCHEMA_PATH_PREFIX': r'/api/',
 }
