@@ -4,7 +4,7 @@ WORKDIR /app
 
 # Copy package files and install dependencies
 COPY front-react/package*.json ./
-RUN npm ci
+RUN npm install
 
 # Copy React project files and build
 COPY front-react/ ./

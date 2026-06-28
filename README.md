@@ -74,11 +74,51 @@ Todos os endpoints da API REST estão sob o prefixo `/api/`:
 
 ## 📖 Documentação Interativa da API (Swagger / ReDoc)
 
-A aplicação conta com documentação interativa automática gerada com o `drf-spectacular`. Com o servidor backend rodando (na porta `8000`), você pode acessar:
+A aplicação conta com documentação interativa automática gerada com o `drf-spectacular`.
 
-- **Swagger UI:** [http://localhost:8000/api/schema/swagger-ui/](http://localhost:8000/api/schema/swagger-ui/) (Interface interativa ideal para testar endpoints e requisições)
-- **ReDoc:** [http://localhost:8000/api/schema/redoc/](http://localhost:8000/api/schema/redoc/) (Layout limpo, focado em leitura)
-- **Schema OpenAPI:** [http://localhost:8000/api/schema/](http://localhost:8000/api/schema/) (Especificação bruta em JSON/YAML)
+- **Se rodando localmente (porta 8000):**
+  - **Swagger UI:** [http://localhost:8000/api/schema/swagger-ui/](http://localhost:8000/api/schema/swagger-ui/) (Interface interativa ideal para testar endpoints e requisições)
+  - **ReDoc:** [http://localhost:8000/api/schema/redoc/](http://localhost:8000/api/schema/redoc/) (Layout limpo, focado em leitura)
+  - **Schema OpenAPI:** [http://localhost:8000/api/schema/](http://localhost:8000/api/schema/) (Especificação bruta em JSON/YAML)
+
+- **Se rodando via Docker (porta 8080):**
+  - **Swagger UI:** [http://localhost:8080/docs](http://localhost:8080/docs) ou [http://localhost:8080/swagger](http://localhost:8080/swagger) (Redirecionam de forma simplificada para a rota Swagger)
+  - **ReDoc:** [http://localhost:8080/api/schema/redoc/](http://localhost:8080/api/schema/redoc/)
+  - **Schema OpenAPI:** [http://localhost:8080/api/schema/](http://localhost:8080/api/schema/)
+
+---
+
+## 🐳 Como Rodar o Projeto com Docker (Recomendado)
+
+O Docker configura e inicia automaticamente todo o ambiente (Backend Django, Frontend React compilado no Nginx e volume do banco de dados).
+
+1. **Configure as credenciais e ambiente (.env):**
+   Crie ou edite o arquivo `.env` na raiz do projeto contendo as credenciais do superusuário e configurações padrão:
+   ```env
+   # Django Settings
+   DEBUG=False
+   SECRET_KEY=django-insecure-production-key-change-me-12345
+   ALLOWED_HOSTS=*
+   CSRF_TRUSTED_ORIGINS=http://localhost:8080,http://127.0.0.1:8080,http://localhost,http://127.0.0.1
+
+   # Django Admin Superuser Credentials
+   DJANGO_SUPERUSER_USERNAME=admin
+   DJANGO_SUPERUSER_PASSWORD=adminpass123
+   DJANGO_SUPERUSER_EMAIL=admin@example.com
+   ```
+
+2. **Inicie os containers:**
+   Abra um terminal no projeto e execute:
+   ```bash
+   docker compose -f docker/docker-compose.yml up --build -d
+   ```
+
+3. **Pronto! Acesse o projeto:**
+   - **Frontend:** [http://localhost:8080](http://localhost:8080)
+   - **Django Admin:** [http://localhost:8080/admin/](http://localhost:8080/admin/)
+   - **Swagger Docs:** [http://localhost:8080/docs](http://localhost:8080/docs)
+
+*Nota: Na primeira execução, o banco é migrado automaticamente e o superusuário configurado no `.env` é criado no banco.*
 
 ---
 
@@ -159,8 +199,12 @@ O comando `python manage.py seed_data` cria contas pré-configuradas para facili
 - **Filho:** Usuário: `filho` | Senha: `123456`
 
 ### Administrador do Django (Painel Admin)
-- **Painel de Controle:** [http://localhost:8000/admin/](http://localhost:8000/admin/)
-- **Superusuário:** Usuário: `admin` | Senha: `admin`
+- **Se rodando Localmente (porta 8000):**
+  - **URL:** [http://localhost:8000/admin/](http://localhost:8000/admin/)
+  - **Superusuário:** Usuário: `admin` | Senha: `admin`
+- **Se rodando via Docker (porta 8080):**
+  - **URL:** [http://localhost:8080/admin/](http://localhost:8080/admin/)
+  - **Superusuário:** Usuário e Senha definidos no seu arquivo [`.env`](file:///c:/Users/lnbentes/LnB/projetos/AppFinanceiro/.env) (ex: `admin` | `adminpass123`)
 
 ---
 
