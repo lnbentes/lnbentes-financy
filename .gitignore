@@ -1,4 +1,4 @@
-# Python
+# Python/Django
 __pycache__/
 *.py[cod]
 *$py.class
@@ -20,25 +20,45 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-
-# Django
 local_settings.py
 db.sqlite3-archived
-# db.sqlite3 is NOT ignored as per user request "Deixe os dados do banco junto com o projeto"
+db.sqlite3
+db.sqlite3-journal
 
-# Virtual Environment
+# Environment Variables & Secrets (Evita commitar credenciais)
+.env
+.env.local
+.env.*.local
+.env.development
+.env.test
+.env.production
+
+# Virtual Environments
 venv/
 .venv/
 ENV/
-.env/
 
-# IDEs
+# Node/Frontend (Vite, React, NPM)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+front/dist/
+front/dist-ssr/
+.eslintcache
+
+# IDEs & Editors
 .vscode/
 .idea/
 *.swp
 *.swo
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
 
-# OS
+# OS-specific files
 .DS_Store
 Thumbs.db
-
