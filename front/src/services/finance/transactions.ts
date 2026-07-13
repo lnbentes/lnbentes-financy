@@ -13,8 +13,8 @@ export const transactionsService = {
   patch: async (id: number | string, data: any) => {
     return api.patch(`/api/transactions/${id}/`, data);
   },
-  delete: async (id: number | string) => {
-    return api.delete(`/api/transactions/${id}/`);
+  delete: async (id: number | string, deleteAll = false) => {
+    return api.delete(`/api/transactions/${id}/`, { params: { delete_all: deleteAll } });
   },
   summary: async (params = {}) => {
     return api.get('/api/transactions/summary/', { params });

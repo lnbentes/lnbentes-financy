@@ -75,9 +75,22 @@ class TransactionViewSet(viewsets.ModelViewSet):
         updated = TransactionService.update_transaction(instance, validated)
         return Response(self.get_serializer(updated).data)
 
+    @extend_schema(
+        summary="Excluir transação",
+        description="Exclui uma transação e reverte o efeito no saldo. Se for uma transação parcelada e o parâmetro 'delete_all' for fornecido como 'true', exclui todas as parcelas do grupo.",
+        parameters=[
+            OpenApiParameter('delete_all', OpenApiTypes.STR, description="Se 'true' e a transação for parcelada, exclui todas as parcelas do mesmo grupo", required=False),
+        ]
+    )
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
-        TransactionService.delete_transaction(instance)
+        delete_all = request.query_params.get('delete_all', 'false').lower() == 'true'
+
+        if delete_all and instance.installment_id_group:
+            TransactionService.delete_installment_group(instance.installment_id_group)
+        else:
+            TransactionService.delete_transaction(instance)
+
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @extend_schema(

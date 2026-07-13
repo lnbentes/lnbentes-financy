@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useFinance } from '../FinanceContext';
 import { financeService } from '../../../services/finance';
 import { Modal } from './Modal';
+import { ConfirmModal } from '../../../components/common/ConfirmModal';
 import { Trash2 } from 'lucide-react';
 
 export function TransactionModal() {
@@ -25,6 +26,8 @@ export function TransactionModal() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showSimpleDeleteConfirm, setShowSimpleDeleteConfirm] = useState(false);
 
   const isEdit = !!selectedTransaction;
   const isTransfer = type === 'TRANSFER';
@@ -55,18 +58,29 @@ export function TransactionModal() {
         setInstallments('2');
       }
       setError('');
+      setShowDeleteConfirm(false);
+      setShowSimpleDeleteConfirm(false);
     }
   }, [isTransactionModalOpen, selectedTransaction, accounts]);
 
   const handleDelete = async () => {
-    if (!window.confirm('Excluir esta transação?')) return;
+    if (selectedTransaction?.installment_id_group) {
+      setShowDeleteConfirm(true);
+    } else {
+      setShowSimpleDeleteConfirm(true);
+    }
+  };
+
+  const executeDelete = async (deleteAll = false) => {
     try {
       setLoading(true);
-      await financeService.transactions.delete(selectedTransaction.id);
+      await financeService.transactions.delete(selectedTransaction.id, deleteAll);
       await loadData();
       setTransactionModalOpen(false);
     } catch (err: any) {
       setError(err.message || 'Erro ao excluir');
+      setShowDeleteConfirm(false);
+      setShowSimpleDeleteConfirm(false);
     } finally {
       setLoading(false);
     }
@@ -77,17 +91,23 @@ export function TransactionModal() {
     setLoading(true);
     setError('');
 
+    if (!account) {
+      setError('Por favor, selecione uma conta.');
+      setLoading(false);
+      return;
+    }
+
     const data: any = {
       description,
-      amount: parseFloat(amount.replace(',', '.')),
+      amount: parseFloat(amount.toString().replace(',', '.')),
       type,
       date,
-      account: parseInt(account) || null,
+      account: account || null,
     };
 
     if (isTransfer) {
       data.installments = 1;
-      data.to_account = parseInt(toAccount) || null;
+      data.to_account = toAccount || null;
       if (!data.to_account) {
         setError('Selecione a conta destino para a transferência.');
         setLoading(false);
@@ -100,7 +120,7 @@ export function TransactionModal() {
       }
     } else {
       data.method = method;
-      data.category = parseInt(category) || null;
+      data.category = category || null;
       if (!isEdit && isInstallment) {
         data.installments = parseInt(installments) || 1;
       } else {
@@ -123,12 +143,58 @@ export function TransactionModal() {
     }
   };
 
+  if (showDeleteConfirm && selectedTransaction) {
+    return (
+      <Modal 
+        isOpen={isTransactionModalOpen} 
+        onClose={() => setTransactionModalOpen(false)} 
+        title="Excluir Transação Parcelada"
+      >
+        <div className="text-center py-4 space-y-4 animate-in fade-in duration-200">
+          <div className="p-3 bg-amber-550/10 dark:bg-amber-950/20 text-amber-700 dark:text-amber-400 rounded-xl text-sm border border-amber-200/50 dark:border-amber-900/30 max-w-md mx-auto">
+            Esta transação faz parte de uma compra parcelada (parcela {selectedTransaction.installment_current}/{selectedTransaction.installment_total}).
+          </div>
+          
+          <h3 className="text-base font-bold text-earth-800 dark:text-earth-100">Como você deseja prosseguir?</h3>
+          
+          <div className="flex flex-col gap-3 max-w-xs mx-auto pt-2">
+            <button
+              type="button"
+              onClick={() => executeDelete(false)}
+              disabled={loading}
+              className="py-2.5 px-4 bg-earth-100 hover:bg-earth-200 dark:bg-earth-800 dark:hover:bg-earth-700 text-earth-700 dark:text-earth-200 rounded-xl font-bold text-sm transition-colors cursor-pointer"
+            >
+              {loading ? 'Excluindo...' : 'Excluir apenas esta parcela'}
+            </button>
+            <button
+              type="button"
+              onClick={() => executeDelete(true)}
+              disabled={loading}
+              className="py-2.5 px-4 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold text-sm transition-colors cursor-pointer"
+            >
+              {loading ? 'Excluindo...' : 'Excluir todas as parcelas'}
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowDeleteConfirm(false)}
+              disabled={loading}
+              className="py-2.5 px-4 text-earth-500 hover:text-earth-700 dark:text-earth-400 dark:hover:text-earth-300 font-semibold text-sm transition-colors cursor-pointer"
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      </Modal>
+    );
+  }
+
   return (
-    <Modal 
-      isOpen={isTransactionModalOpen} 
-      onClose={() => setTransactionModalOpen(false)} 
-      title={isEdit ? 'Editar Transação' : 'Nova Transação'}
-    >
+    <>
+      <Modal 
+        isOpen={isTransactionModalOpen} 
+        onClose={() => setTransactionModalOpen(false)} 
+        title={isEdit ? 'Editar Transação' : 'Nova Transação'}
+      >
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && <div className="p-3 bg-red-50 text-red-600 rounded-xl text-sm">{error}</div>}
 
@@ -141,7 +207,7 @@ export function TransactionModal() {
           />
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-earth-700 dark:text-earth-300 mb-1">Valor (R$) *</label>
             <input 
@@ -164,7 +230,7 @@ export function TransactionModal() {
         </div>
 
         {!isTransfer && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-earth-700 dark:text-earth-300 mb-1">Método</label>
               <select 
@@ -218,7 +284,7 @@ export function TransactionModal() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-earth-700 dark:text-earth-300 mb-1">{isTransfer ? 'Conta origem' : 'Conta'}</label>
             <select 
@@ -286,5 +352,21 @@ export function TransactionModal() {
         </div>
       </form>
     </Modal>
+
+      <ConfirmModal
+        isOpen={showSimpleDeleteConfirm}
+        onClose={() => setShowSimpleDeleteConfirm(false)}
+        onConfirm={async () => {
+          setShowSimpleDeleteConfirm(false);
+          await executeDelete(false);
+        }}
+        title="Excluir Transação"
+        message={`Tem certeza de que deseja excluir a transação "${selectedTransaction?.description}"? Esta ação não poderá ser desfeita.`}
+        confirmText="Excluir"
+        cancelText="Cancelar"
+        type="danger"
+        isLoading={loading}
+      />
+    </>
   );
 }

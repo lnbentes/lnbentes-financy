@@ -3,6 +3,8 @@ import { Search, Plus, TrendingUp, TrendingDown, ArrowRightLeft, Trash2, Edit2 }
 import { useFinance } from '../FinanceContext';
 import { formatBRL, formatDate } from '../../../utils/format';
 import { financeService } from '../../../services/finance';
+import { ConfirmModal } from '../../../components/common/ConfirmModal';
+import { Modal } from '../modals/Modal';
 
 export function TransactionList() {
   const { 
@@ -11,6 +13,10 @@ export function TransactionList() {
   } = useFinance();
 
   const [showFab, setShowFab] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showSimpleDeleteConfirm, setShowSimpleDeleteConfirm] = useState(false);
+  const [selectedTxToDelete, setSelectedTxToDelete] = useState<any>(null);
+  const [loadingDelete, setLoadingDelete] = useState(false);
 
   useEffect(() => {
     const mainEl = document.querySelector('main');
@@ -22,13 +28,28 @@ export function TransactionList() {
     return () => mainEl.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const handleDeleteTransaction = async (id: number) => {
-    if (!window.confirm('Excluir esta transação?')) return;
+  const handleDeleteTransaction = (t: any) => {
+    setSelectedTxToDelete(t);
+    if (t.installment_id_group) {
+      setShowDeleteConfirm(true);
+    } else {
+      setShowSimpleDeleteConfirm(true);
+    }
+  };
+
+  const executeDelete = async (deleteAll = false) => {
+    if (!selectedTxToDelete) return;
     try {
-      await financeService.transactions.delete(id);
+      setLoadingDelete(true);
+      await financeService.transactions.delete(selectedTxToDelete.id, deleteAll);
       await loadData();
     } catch (err: any) {
       alert(err.message || 'Erro ao excluir transação');
+    } finally {
+      setLoadingDelete(false);
+      setShowDeleteConfirm(false);
+      setShowSimpleDeleteConfirm(false);
+      setSelectedTxToDelete(null);
     }
   };
 
@@ -43,7 +64,8 @@ export function TransactionList() {
   };
 
   return (
-    <div className="lg:col-span-2 space-y-3">
+    <>
+      <div className="lg:col-span-2 space-y-3">
       <div className="flex flex-wrap justify-between items-center gap-2">
         <h3 className="text-lg font-bold">Transações</h3>
         <button onClick={handleNewTransaction} className="flex items-center gap-1.5 text-sm bg-forest-600 hover:bg-forest-700 text-white px-3 py-1.5 rounded-xl transition-colors">
@@ -104,7 +126,7 @@ export function TransactionList() {
                   <span className={`font-bold ${amtClass}`}>{sign} {formatBRL(t.amount)}</span>
                   <div className="flex gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
                     <button onClick={() => handleEditTransaction(t)} className="p-1.5 rounded-lg hover:bg-earth-200 dark:hover:bg-earth-700"><Edit2 size={16} className="text-earth-500" /></button>
-                    <button onClick={() => handleDeleteTransaction(t.id)} className="p-1.5 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30"><Trash2 size={16} className="text-red-400" /></button>
+                    <button onClick={() => handleDeleteTransaction(t)} className="p-1.5 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30"><Trash2 size={16} className="text-red-400" /></button>
                   </div>
                 </div>
               </div>
@@ -124,5 +146,70 @@ export function TransactionList() {
         </button>
       )}
     </div>
+
+      <ConfirmModal
+        isOpen={showSimpleDeleteConfirm}
+        onClose={() => {
+          setShowSimpleDeleteConfirm(false);
+          setSelectedTxToDelete(null);
+        }}
+        onConfirm={() => executeDelete(false)}
+        title="Excluir Transação"
+        message={`Tem certeza de que deseja excluir a transação "${selectedTxToDelete?.description}"? Esta ação não poderá ser desfeita.`}
+        confirmText="Excluir"
+        cancelText="Cancelar"
+        type="danger"
+        isLoading={loadingDelete}
+      />
+
+      {showDeleteConfirm && selectedTxToDelete && (
+        <Modal 
+          isOpen={showDeleteConfirm} 
+          onClose={() => {
+            setShowDeleteConfirm(false);
+            setSelectedTxToDelete(null);
+          }} 
+          title="Excluir Transação Parcelada"
+        >
+          <div className="text-center py-4 space-y-4 animate-in fade-in duration-200">
+            <div className="p-3 bg-amber-550/10 dark:bg-amber-950/20 text-amber-700 dark:text-amber-400 rounded-xl text-sm border border-amber-200/50 dark:border-amber-900/30 max-w-md mx-auto">
+              Esta transação faz parte de uma compra parcelada (parcela {selectedTxToDelete.installment_current}/{selectedTxToDelete.installment_total}).
+            </div>
+            
+            <h3 className="text-base font-bold text-earth-800 dark:text-earth-100">Como você deseja prosseguir?</h3>
+            
+            <div className="flex flex-col gap-3 max-w-xs mx-auto pt-2">
+              <button
+                type="button"
+                onClick={() => executeDelete(false)}
+                disabled={loadingDelete}
+                className="py-2.5 px-4 bg-earth-100 hover:bg-earth-200 dark:bg-earth-800 dark:hover:bg-earth-700 text-earth-700 dark:text-earth-200 rounded-xl font-bold text-sm transition-colors cursor-pointer"
+              >
+                {loadingDelete ? 'Excluindo...' : 'Excluir apenas esta parcela'}
+              </button>
+              <button
+                type="button"
+                onClick={() => executeDelete(true)}
+                disabled={loadingDelete}
+                className="py-2.5 px-4 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold text-sm transition-colors cursor-pointer"
+              >
+                {loadingDelete ? 'Excluindo...' : 'Excluir todas as parcelas'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowDeleteConfirm(false);
+                  setSelectedTxToDelete(null);
+                }}
+                disabled={loadingDelete}
+                className="py-2.5 px-4 text-earth-500 hover:text-earth-700 dark:text-earth-400 dark:hover:text-earth-300 font-semibold text-sm transition-colors cursor-pointer"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+    </>
   );
 }

@@ -33,10 +33,10 @@ export function Header({ onMenuClick, title }: HeaderProps) {
     }
   };
 
-  // Buscar notificações na montagem e configurar polling a cada 15s
+  // Buscar notificações na montagem e configurar polling a cada 60s
   useEffect(() => {
     fetchNotifications();
-    const interval = setInterval(fetchNotifications, 15000);
+    const interval = setInterval(fetchNotifications, 60000);
     return () => clearInterval(interval);
   }, [user]);
 

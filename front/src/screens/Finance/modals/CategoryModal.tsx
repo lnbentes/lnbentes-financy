@@ -34,6 +34,7 @@ export function CategoryModal() {
   const [name, setName] = useState('');
   const [color, setColor] = useState('#888888');
   const [icon, setIcon] = useState(CATEGORY_ICONS[CATEGORY_ICONS.length - 1].value);
+  const [type, setType] = useState('EXPENSE');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -45,10 +46,12 @@ export function CategoryModal() {
         setName(selectedCategory.name);
         setColor(selectedCategory.color || '#888888');
         setIcon(selectedCategory.icon || CATEGORY_ICONS[CATEGORY_ICONS.length - 1].value);
+        setType(selectedCategory.type || 'EXPENSE');
       } else {
         setName('');
         setColor('#888888');
         setIcon(CATEGORY_ICONS[CATEGORY_ICONS.length - 1].value);
+        setType('EXPENSE');
       }
       setError('');
     }
@@ -73,7 +76,7 @@ export function CategoryModal() {
     setLoading(true);
     setError('');
 
-    const data = { name, color, icon };
+    const data = { name, color, icon, type };
 
     try {
       if (selectedCategory) {
@@ -107,9 +110,23 @@ export function CategoryModal() {
             type="text" 
             value={name}
             onChange={e => setName(e.target.value)}
-            className="w-full px-4 py-2 rounded-xl border border-earth-200 dark:border-earth-700 bg-earth-50 dark:bg-earth-800 focus:ring-2 focus:ring-forest-500 outline-none"
+            className="w-full px-4 py-2 rounded-xl border border-earth-200 dark:border-earth-700 bg-earth-50 dark:bg-earth-800 focus:ring-2 focus:ring-forest-500 outline-none text-earth-800 dark:text-earth-100"
             required
           />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-earth-700 dark:text-earth-300 mb-1">Tipo</label>
+          <select 
+            value={type}
+            onChange={e => setType(e.target.value)}
+            className="w-full px-4 py-2 rounded-xl border border-earth-200 dark:border-earth-700 bg-earth-50 dark:bg-earth-800 focus:ring-2 focus:ring-forest-500 outline-none text-earth-800 dark:text-earth-100"
+            required
+          >
+            <option value="EXPENSE">Despesa</option>
+            <option value="INCOME">Receita</option>
+            <option value="BOTH">Ambos</option>
+          </select>
         </div>
 
         <div>

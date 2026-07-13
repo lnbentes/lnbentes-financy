@@ -115,7 +115,7 @@ export function Dashboard() {
           <h2 className="text-3xl font-bold text-forest-900 dark:text-forest-100">
             Bem-vindo, {user?.first_name || user?.username}
           </h2>
-          <p className="text-earth-600 dark:text-earth-400">Aqui está o que acontece na sua eco-casa.</p>
+          <p className="text-earth-600 dark:text-earth-400">Aqui está o dashboard.</p>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
           <button 
@@ -144,9 +144,9 @@ export function Dashboard() {
       </header>
 
       {/* Overview Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
 
-        <div className="bg-white dark:bg-earth-900 p-4 sm:p-5 rounded-2xl shadow-sm border border-earth-200 dark:border-earth-800">
+        <div className="bg-white dark:bg-earth-900 p-3 sm:p-5 rounded-2xl shadow-sm border border-earth-200 dark:border-earth-800">
           <div className="flex justify-between items-start gap-2 min-w-0">
             <div className="min-w-0">
               <p className="text-xs sm:text-sm font-medium text-earth-500 truncate">Saldo Total</p>
@@ -160,7 +160,7 @@ export function Dashboard() {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-earth-900 p-4 sm:p-5 rounded-2xl shadow-sm border border-earth-200 dark:border-earth-800">
+        <div className="bg-white dark:bg-earth-900 p-3 sm:p-5 rounded-2xl shadow-sm border border-earth-200 dark:border-earth-800">
           <div className="flex justify-between items-start gap-2 min-w-0">
             <div className="min-w-0">
               <p className="text-xs sm:text-sm font-medium text-earth-500 truncate">Renda (Mês)</p>
@@ -172,7 +172,7 @@ export function Dashboard() {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-earth-900 p-4 sm:p-5 rounded-2xl shadow-sm border border-earth-200 dark:border-earth-800">
+        <div className="bg-white dark:bg-earth-900 p-3 sm:p-5 rounded-2xl shadow-sm border border-earth-200 dark:border-earth-800">
           <div className="flex justify-between items-start gap-2 min-w-0">
             <div className="min-w-0">
               <p className="text-xs sm:text-sm font-medium text-earth-500 truncate">Gastos (Mês)</p>
@@ -184,7 +184,7 @@ export function Dashboard() {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-earth-900 p-4 sm:p-5 rounded-2xl shadow-sm border border-earth-200 dark:border-earth-800">
+        <div className="bg-white dark:bg-earth-900 p-3 sm:p-5 rounded-2xl shadow-sm border border-earth-200 dark:border-earth-800">
           <div className="flex justify-between items-start gap-2 min-w-0">
             <div className="min-w-0">
               <p className="text-xs sm:text-sm font-medium text-earth-500 truncate">Saldo (Mês)</p>
