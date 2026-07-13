@@ -21,9 +21,9 @@ wheels/
 .installed.cfg
 *.egg
 local_settings.py
-db.sqlite3-archived
-db.sqlite3
-db.sqlite3-journal
+**/db.sqlite3-archived
+**/db.sqlite3
+**/db.sqlite3-journal
 
 # Environment Variables & Secrets (Evita commitar credenciais)
 .env
@@ -58,6 +58,8 @@ front/dist-ssr/
 *.ntvs*
 *.njsproj
 *.sln
+.agents/
+*.agents
 
 # OS-specific files
 .DS_Store

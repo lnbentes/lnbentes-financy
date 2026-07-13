@@ -3,6 +3,7 @@ import { useFinance } from '../FinanceContext';
 import { financeService } from '../../../services/finance';
 import { Modal } from './Modal';
 import { Download, Upload, Trash2, AlertTriangle, FileJson, CheckCircle2 } from 'lucide-react';
+import { ConfirmModal } from '../../../components/common/ConfirmModal';
 
 const MONTHS_PT = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
 
@@ -10,6 +11,8 @@ export function DataModal() {
   const { isDataModalOpen, setDataModalOpen, loadData, accounts } = useFinance();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteMessage, setDeleteMessage] = useState('');
   
   // Filters
   const [selectedAccounts, setSelectedAccounts] = useState<number[]>([]);
@@ -36,6 +39,8 @@ export function DataModal() {
       setPasteAccount('');
       setImportResult(null);
       setError('');
+      setShowDeleteConfirm(false);
+      setDeleteMessage('');
     }
   }, [isDataModalOpen]);
 
@@ -113,32 +118,44 @@ export function DataModal() {
     }
   };
 
-  const handleBulkDelete = async () => {
+  const handleBulkDelete = () => {
     const params = getFilterParams();
     
-    let msg = 'Confirma a exclusão das transações';
+    let msg = 'Tem certeza de que deseja excluir as transações';
     if (params.year && params.month) msg += ` de ${params.month}/${params.year}`;
     else if (params.year) msg += ` do ano ${params.year}`;
     else msg += ' de todo o período';
-    if (selectedAccounts.length) msg += ` nas ${selectedAccounts.length} conta(s) selecionada(s)`;
-    msg += '?\n\nEsta ação não pode ser desfeita.';
+    
+    if (selectedAccounts.length) {
+      const accNames = accounts
+        .filter(a => selectedAccounts.includes(Number(a.id)))
+        .map(a => a.name)
+        .join(', ');
+      msg += ` nas contas: ${accNames}`;
+    } else {
+      msg += ' em todas as contas';
+    }
+    msg += '? Esta ação é permanente e não poderá ser desfeita.';
 
-    if (!window.confirm(msg)) return;
+    setDeleteMessage(msg);
+    setShowDeleteConfirm(true);
+  };
 
+  const executeBulkDelete = async () => {
+    const params = getFilterParams();
     setLoading(true);
     setError('');
     setImportResult(null);
 
     try {
-      const res = await financeService.transactions.bulkDelete(params);
-      const data = res.data || res;
-      alert(`${data.deleted || 0} transação(ões) excluída(s) com sucesso.`);
+      await financeService.transactions.bulkDelete(params);
       await loadData();
       setDataModalOpen(false);
     } catch (err: any) {
       setError(err.message || 'Erro ao deletar dados.');
     } finally {
       setLoading(false);
+      setShowDeleteConfirm(false);
     }
   };
 
@@ -148,11 +165,12 @@ export function DataModal() {
   };
 
   return (
-    <Modal 
-      isOpen={isDataModalOpen} 
-      onClose={() => setDataModalOpen(false)} 
-      title="Gerenciamento de Dados"
-    >
+    <>
+      <Modal 
+        isOpen={isDataModalOpen} 
+        onClose={() => setDataModalOpen(false)} 
+        title="Gerenciamento de Dados"
+      >
       <div className="space-y-6">
         {/* Filtros */}
         <div className="bg-earth-50 dark:bg-earth-800/50 rounded-xl p-4 space-y-3">
@@ -362,5 +380,18 @@ export function DataModal() {
 
       </div>
     </Modal>
+
+      <ConfirmModal
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={executeBulkDelete}
+        title="Excluir Transações em Lote"
+        message={deleteMessage}
+        confirmText="Excluir Tudo"
+        cancelText="Cancelar"
+        type="danger"
+        isLoading={loading}
+      />
+    </>
   );
 }

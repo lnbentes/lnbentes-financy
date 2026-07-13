@@ -34,6 +34,7 @@ export function CategoryModal() {
   const [name, setName] = useState('');
   const [color, setColor] = useState('#888888');
   const [icon, setIcon] = useState(CATEGORY_ICONS[CATEGORY_ICONS.length - 1].value);
+  const [type, setType] = useState('EXPENSE');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -45,10 +46,12 @@ export function CategoryModal() {
         setName(selectedCategory.name);
         setColor(selectedCategory.color || '#888888');
         setIcon(selectedCategory.icon || CATEGORY_ICONS[CATEGORY_ICONS.length - 1].value);
+        setType(selectedCategory.type || 'EXPENSE');
       } else {
         setName('');
         setColor('#888888');
         setIcon(CATEGORY_ICONS[CATEGORY_ICONS.length - 1].value);
+        setType('EXPENSE');
       }
       setError('');
     }
@@ -73,7 +76,7 @@ export function CategoryModal() {
     setLoading(true);
     setError('');
 
-    const data = { name, color, icon };
+    const data = { name, color, icon, type };
 
     try {
       if (selectedCategory) {
@@ -107,9 +110,23 @@ export function CategoryModal() {
             type="text" 
             value={name}
             onChange={e => setName(e.target.value)}
-            className="w-full px-4 py-2 rounded-xl border border-earth-200 dark:border-earth-700 bg-earth-50 dark:bg-earth-800 focus:ring-2 focus:ring-forest-500 outline-none"
+            className="w-full px-4 py-2 rounded-xl border border-earth-200 dark:border-earth-700 bg-earth-50 dark:bg-earth-800 focus:ring-2 focus:ring-forest-500 outline-none text-earth-800 dark:text-earth-100"
             required
           />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-earth-700 dark:text-earth-300 mb-1">Tipo</label>
+          <select 
+            value={type}
+            onChange={e => setType(e.target.value)}
+            className="w-full px-4 py-2 rounded-xl border border-earth-200 dark:border-earth-700 bg-earth-50 dark:bg-earth-800 focus:ring-2 focus:ring-forest-500 outline-none text-earth-800 dark:text-earth-100"
+            required
+          >
+            <option value="EXPENSE">Despesa</option>
+            <option value="INCOME">Receita</option>
+            <option value="BOTH">Ambos</option>
+          </select>
         </div>
 
         <div>
@@ -124,17 +141,17 @@ export function CategoryModal() {
 
         <div>
           <label className="block text-sm font-medium text-earth-700 dark:text-earth-300 mb-2">Ícone</label>
-          <div className="grid grid-cols-5 gap-1.5 max-h-40 overflow-y-auto pr-1">
+          <div className="grid grid-cols-4 sm:grid-cols-5 gap-1.5 max-h-40 overflow-y-auto pr-1">
             {CATEGORY_ICONS.map(ic => {
               const active = icon === ic.value;
               return (
                 <button 
                   key={ic.value} type="button" onClick={() => setIcon(ic.value)} title={ic.label}
-                  className={`flex flex-col items-center gap-1 p-2 rounded-xl border-2 transition-all text-earth-600 dark:text-earth-300
+                  className={`flex flex-col items-center gap-1 p-2 rounded-xl border-2 transition-all text-earth-600 dark:text-earth-300 min-w-0
                     ${active ? 'border-forest-500 bg-forest-50 dark:bg-forest-900/30' : 'border-transparent hover:border-earth-300 dark:hover:border-earth-600'}`}
                 >
-                  <ic.Icon size={20} />
-                  <span className="text-[9px] leading-tight text-center">{ic.label}</span>
+                  <ic.Icon size={20} className="shrink-0" />
+                  <span className="text-[9px] leading-tight text-center truncate w-full" title={ic.label}>{ic.label}</span>
                 </button>
               );
             })}

@@ -180,3 +180,14 @@ class TransactionService:
         tx_id = transaction.id
         transaction.delete()
         logger.info('Transação excluída: id=%s', tx_id)
+
+    @staticmethod
+    def delete_installment_group(group_id):
+        """Exclui todas as transações de um grupo de parcelas, revertendo o efeito de cada uma no saldo."""
+        transactions = Transaction.objects.filter(installment_id_group=group_id)
+        for tx in transactions:
+            TransactionService._reverse_balance(tx)
+        
+        count = transactions.count()
+        transactions.delete()
+        logger.info('%d transações excluídas do grupo=%s', count, group_id)

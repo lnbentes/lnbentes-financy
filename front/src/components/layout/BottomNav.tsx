@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { Grid, BarChart3 } from 'lucide-react';
+import { Grid, BarChart3, Settings } from 'lucide-react';
 
 export function BottomNav() {
   const navLinkClasses = ({ isActive }: { isActive: boolean }) =>
@@ -11,7 +11,7 @@ export function BottomNav() {
 
   return (
     <nav 
-      className="fixed bottom-0 left-0 right-0 bg-white dark:bg-earth-900 border-t border-earth-200 dark:border-earth-800 flex md:hidden z-50" 
+      className="fixed bottom-0 left-0 right-0 bg-white dark:bg-earth-900 border-t border-earth-200 dark:border-earth-800 flex md:hidden z-30" 
       style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
     >
       <NavLink to="/dashboard" className={navLinkClasses}>
@@ -21,6 +21,10 @@ export function BottomNav() {
       <NavLink to="/finance" className={navLinkClasses}>
         <BarChart3 size={22} />
         <span className="text-[10px] font-medium">Finanças</span>
+      </NavLink>
+      <NavLink to="/settings" className={navLinkClasses}>
+        <Settings size={22} />
+        <span className="text-[10px] font-medium">Ajustes</span>
       </NavLink>
     </nav>
   );
