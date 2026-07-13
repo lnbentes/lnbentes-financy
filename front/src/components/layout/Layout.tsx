@@ -22,7 +22,7 @@ export function Layout() {
     <div className="flex min-h-screen bg-earth-50 dark:bg-earth-950 transition-colors duration-300 overflow-hidden">
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       
-      <main className="flex-1 pt-0 pb-20 px-4 md:pt-0 md:pb-8 md:px-8 overflow-y-auto h-screen no-scrollbar transition-all duration-300 ease-in-out md:ml-64 relative">
+      <main className="flex-1 pt-0 pb-20 px-4 md:pt-0 md:pb-8 md:px-8 overflow-y-auto h-screen transition-all duration-300 ease-in-out md:ml-64 relative">
         <Header onMenuClick={() => setSidebarOpen(true)} title={getTitle()} />
         
         <div className="animate-in fade-in duration-300">

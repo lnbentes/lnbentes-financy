@@ -31,7 +31,7 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
             <X size={20} />
           </button>
         </div>
-        <div className="p-6 max-h-[75vh] overflow-y-auto no-scrollbar">
+        <div className="p-6 max-h-[75vh] overflow-y-auto">
           {children}
         </div>
       </div>

@@ -29,7 +29,7 @@ function FinanceContent() {
   return (
     <div className="space-y-6">
       {/* Top Filter Bar Container */}
-      <div className="sticky top-[64px] md:top-[80px] z-30 bg-earth-50 dark:bg-earth-950 py-2 -mx-4 px-4 md:-mx-8 md:px-8 transition-colors">
+      <div className="sticky top-[64px] md:top-[75px] z-30 bg-earth-50 dark:bg-earth-950 py-2 -mx-4 px-4 md:-mx-8 md:px-8 transition-colors">
         <div className="flex flex-wrap items-center gap-2 md:gap-3 bg-white dark:bg-earth-900 p-3 md:p-4 rounded-2xl border border-earth-200 dark:border-earth-800 shadow-sm transition-shadow">
           <button 
             onClick={() => { setMonth(new Date().getMonth() + 1); setYear(new Date().getFullYear()); }}
