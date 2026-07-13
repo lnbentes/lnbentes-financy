@@ -1,0 +1,90 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+  --color-forest-50: var(--primary-50);
+  --color-forest-100: var(--primary-100);
+  --color-forest-200: var(--primary-200);
+  --color-forest-300: var(--primary-300);
+  --color-forest-400: var(--primary-400);
+  --color-forest-500: var(--primary-500);
+  --color-forest-600: var(--primary-600);
+  --color-forest-700: var(--primary-700);
+  --color-forest-800: var(--primary-800);
+  --color-forest-900: var(--primary-900);
+
+  --color-earth-50: #fbfaf9;
+  --color-earth-100: #f5f4f1;
+  --color-earth-200: #e8e5df;
+  --color-earth-300: #d4cfc4;
+  --color-earth-400: #bcb4a3;
+  --color-earth-500: #a39783;
+  --color-earth-600: #897d6a;
+  --color-earth-700: #726758;
+  --color-earth-800: #5e5549;
+  --color-earth-900: #4d463d;
+  --color-earth-950: #292520;
+}
+
+@layer base {
+  :root {
+    --bg-color: var(--color-earth-50);
+    --text-color: var(--color-earth-900);
+
+    --primary-50: #f0fdf4;
+    --primary-100: #dcfce7;
+    --primary-200: #bbf7d0;
+    --primary-300: #86efac;
+    --primary-400: #4ade80;
+    --primary-500: #22c55e;
+    --primary-600: #16a34a;
+    --primary-700: #15803d;
+    --primary-800: #166534;
+    --primary-900: #14532d;
+  }
+  
+  .dark {
+    --bg-color: var(--color-earth-950);
+    --text-color: var(--color-earth-100);
+  }
+
+  body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+  }
+
+  /* Scrollbar customizada moderna global */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: var(--primary-300);
+    border-radius: 9999px;
+    transition: background 0.3s ease;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-500);
+  }
+
+  /* Suporte para Firefox */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--primary-300) transparent;
+  }
+}
+
+@utility no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}

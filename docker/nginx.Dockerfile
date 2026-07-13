@@ -3,11 +3,11 @@ FROM node:20-alpine AS build-stage
 WORKDIR /app
 
 # Copy package files and install dependencies
-COPY front-react/package*.json ./
+COPY front/package*.json ./
 RUN npm install
 
 # Copy React project files and build
-COPY front-react/ ./
+COPY front/ ./
 RUN npm run build
 
 # Stage 2: Serve React frontend using Nginx

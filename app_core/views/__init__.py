@@ -3,6 +3,8 @@ from .auth import api_login, api_logout
 from .category import CategoryViewSet
 from .account import AccountViewSet
 from .transaction import TransactionViewSet
+from .registration import RegistrationRequestViewSet
+from .notification import NotificationViewSet
 
 __all__ = [
     'UserViewSet',
@@ -10,5 +12,7 @@ __all__ = [
     'api_logout',
     'CategoryViewSet',
     'AccountViewSet',
-    'TransactionViewSet'
+    'TransactionViewSet',
+    'RegistrationRequestViewSet',
+    'NotificationViewSet'
 ]

@@ -21,7 +21,7 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, Spec
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('app_core.urls')),
-    path('', include('front.urls')),
+    # path('', include('front-old.urls')),
     
     # Rotas do Swagger/OpenAPI
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),

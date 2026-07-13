@@ -3,8 +3,8 @@
 .vscode
 venv/
 node_modules/
-front-react/node_modules/
-front-react/dist/
+front/node_modules/
+front/dist/
 db.sqlite3
 *.pyc
 __pycache__/
