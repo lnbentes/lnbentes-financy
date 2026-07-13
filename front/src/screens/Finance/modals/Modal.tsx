@@ -12,7 +12,7 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-top justify-center p-4">
       {/* Backdrop */}
       <div 
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
@@ -20,8 +20,9 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
       />
       
       {/* Modal Content */}
-      <div className="relative bg-white dark:bg-earth-900 rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-        <div className="flex items-center justify-between p-6 border-b border-earth-100 dark:border-earth-800">
+      <div className="relative bg-white dark:bg-earth-900 rounded-t-3xl sm:rounded-3xl 
+      rounded-b-3xl w-full max-w-lg max-h-[90vh] shadow-2xl overflow-hidden animate-in slide-in-from-bottom sm:zoom-in-95 duration-200">
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-earth-100 dark:border-earth-800">
           <h2 className="text-xl font-bold text-earth-800 dark:text-earth-100">{title}</h2>
           <button 
             onClick={onClose}
@@ -30,7 +31,7 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
             <X size={20} />
           </button>
         </div>
-        <div className="p-6 max-h-[80vh] overflow-y-auto no-scrollbar">
+        <div className="p-6 max-h-[75vh] overflow-y-auto no-scrollbar">
           {children}
         </div>
       </div>

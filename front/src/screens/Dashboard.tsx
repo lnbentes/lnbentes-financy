@@ -144,56 +144,56 @@ export function Dashboard() {
       </header>
 
       {/* Overview Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 
-        <div className="bg-white dark:bg-earth-900 p-5 rounded-2xl shadow-sm border border-earth-200 dark:border-earth-800">
-          <div className="flex justify-between items-start">
-            <div>
-              <p className="text-sm font-medium text-earth-500">Saldo Total</p>
-              <h3 className={`text-2xl font-bold mt-1 ${totalBalance >= 0 ? 'text-forest-600' : 'text-red-600'}`}>
+        <div className="bg-white dark:bg-earth-900 p-4 sm:p-5 rounded-2xl shadow-sm border border-earth-200 dark:border-earth-800">
+          <div className="flex justify-between items-start gap-2 min-w-0">
+            <div className="min-w-0">
+              <p className="text-xs sm:text-sm font-medium text-earth-500 truncate">Saldo Total</p>
+              <h3 className={`text-xl sm:text-2xl font-bold mt-1 truncate ${totalBalance >= 0 ? 'text-forest-600' : 'text-red-600'}`}>
                 {loading ? '...' : formatBRL(totalBalance)}
               </h3>
             </div>
-            <div className="p-2 bg-forest-100 text-forest-600 rounded-lg">
-              <Building2 size={24} />
+            <div className="p-2 bg-forest-100 text-forest-600 rounded-lg shrink-0">
+              <Building2 size={20} className="sm:w-6 sm:h-6" />
             </div>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-earth-900 p-5 rounded-2xl shadow-sm border border-earth-200 dark:border-earth-800">
-          <div className="flex justify-between items-start">
-            <div>
-              <p className="text-sm font-medium text-earth-500">Renda (Mês)</p>
-              <h3 className="text-2xl font-bold text-green-600 mt-1">{loading ? '...' : formatBRL(summary.income)}</h3>
+        <div className="bg-white dark:bg-earth-900 p-4 sm:p-5 rounded-2xl shadow-sm border border-earth-200 dark:border-earth-800">
+          <div className="flex justify-between items-start gap-2 min-w-0">
+            <div className="min-w-0">
+              <p className="text-xs sm:text-sm font-medium text-earth-500 truncate">Renda (Mês)</p>
+              <h3 className="text-xl sm:text-2xl font-bold text-green-600 mt-1 truncate">{loading ? '...' : formatBRL(summary.income)}</h3>
             </div>
-            <div className="p-2 bg-green-100 text-green-600 rounded-lg">
-              <TrendingUp size={24} />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-earth-900 p-5 rounded-2xl shadow-sm border border-earth-200 dark:border-earth-800">
-          <div className="flex justify-between items-start">
-            <div>
-              <p className="text-sm font-medium text-earth-500">Gastos (Mês)</p>
-              <h3 className="text-2xl font-bold text-red-600 mt-1">{loading ? '...' : formatBRL(summary.expense)}</h3>
-            </div>
-            <div className="p-2 bg-red-100 text-red-600 rounded-lg">
-              <TrendingDown size={24} />
+            <div className="p-2 bg-green-100 text-green-600 rounded-lg shrink-0">
+              <TrendingUp size={20} className="sm:w-6 sm:h-6" />
             </div>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-earth-900 p-5 rounded-2xl shadow-sm border border-earth-200 dark:border-earth-800">
-          <div className="flex justify-between items-start">
-            <div>
-              <p className="text-sm font-medium text-earth-500">Saldo (Mês)</p>
-              <h3 className={`text-2xl font-bold mt-1 ${summary.balance >= 0 ? 'text-forest-600' : 'text-red-600'}`}>
+        <div className="bg-white dark:bg-earth-900 p-4 sm:p-5 rounded-2xl shadow-sm border border-earth-200 dark:border-earth-800">
+          <div className="flex justify-between items-start gap-2 min-w-0">
+            <div className="min-w-0">
+              <p className="text-xs sm:text-sm font-medium text-earth-500 truncate">Gastos (Mês)</p>
+              <h3 className="text-xl sm:text-2xl font-bold text-red-600 mt-1 truncate">{loading ? '...' : formatBRL(summary.expense)}</h3>
+            </div>
+            <div className="p-2 bg-red-100 text-red-600 rounded-lg shrink-0">
+              <TrendingDown size={20} className="sm:w-6 sm:h-6" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-earth-900 p-4 sm:p-5 rounded-2xl shadow-sm border border-earth-200 dark:border-earth-800">
+          <div className="flex justify-between items-start gap-2 min-w-0">
+            <div className="min-w-0">
+              <p className="text-xs sm:text-sm font-medium text-earth-500 truncate">Saldo (Mês)</p>
+              <h3 className={`text-xl sm:text-2xl font-bold mt-1 truncate ${summary.balance >= 0 ? 'text-forest-600' : 'text-red-600'}`}>
                 {loading ? '...' : formatBRL(summary.balance)}
               </h3>
             </div>
-            <div className="p-2 bg-forest-100 text-forest-600 rounded-lg">
-              <Wallet size={24} />
+            <div className="p-2 bg-forest-100 text-forest-600 rounded-lg shrink-0">
+              <Wallet size={20} className="sm:w-6 sm:h-6" />
             </div>
           </div>
         </div>

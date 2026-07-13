@@ -12,7 +12,7 @@ export function Header({ onMenuClick, title }: HeaderProps) {
   const { user } = useAuth();
 
   return (
-    <header className="flex justify-between items-center mb-6 sticky top-0 bg-earth-50/90 dark:bg-earth-950/90 backdrop-blur-sm py-2 z-40 gap-3">
+    <header className="flex justify-between items-center mb-6 sticky top-0 bg-earth-50 dark:bg-earth-950 pt-4 md:pt-8 pb-2 z-40 gap-2 sm:gap-3">
       <div className="flex items-center gap-2 min-w-0">
         <button 
           onClick={onMenuClick}
@@ -22,14 +22,14 @@ export function Header({ onMenuClick, title }: HeaderProps) {
           <Menu size={24} />
         </button>
         <span className="md:hidden font-bold font-serif text-base text-forest-700 dark:text-forest-300 truncate">
-          Finanças App
+          Finanças
         </span>
         <h2 className="hidden md:block text-xl font-bold capitalize text-earth-800 dark:text-earth-100 truncate">
           {title}
         </h2>
       </div>
 
-      <div className="flex items-center gap-1 sm:gap-3 shrink-0">
+      <div className="flex items-center gap-0.5 sm:gap-3 shrink-0">
         <button 
           onClick={toggleTheme}
           className="p-2 rounded-full text-forest-600 dark:text-forest-300 hover:bg-forest-100 dark:hover:bg-forest-900 transition-colors"
@@ -42,7 +42,7 @@ export function Header({ onMenuClick, title }: HeaderProps) {
           <span className="absolute top-1.5 right-2 w-2 h-2 bg-red-500 rounded-full"></span>
         </button>
 
-        <div className="flex items-center gap-2 border-l pl-2 sm:pl-4 border-earth-300 dark:border-earth-700">
+        <div className="flex items-center gap-1 border-l pl-1 sm:pl-4 border-earth-300 dark:border-earth-700">
           <button className="flex items-center gap-2 focus:outline-none">
             <span className="hidden sm:inline text-sm font-medium text-earth-700 dark:text-earth-200 max-w-[80px] truncate">
               {user?.first_name || user?.username || 'User'}

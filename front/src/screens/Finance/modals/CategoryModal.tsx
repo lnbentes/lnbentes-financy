@@ -124,17 +124,17 @@ export function CategoryModal() {
 
         <div>
           <label className="block text-sm font-medium text-earth-700 dark:text-earth-300 mb-2">Ícone</label>
-          <div className="grid grid-cols-5 gap-1.5 max-h-40 overflow-y-auto pr-1">
+          <div className="grid grid-cols-4 sm:grid-cols-5 gap-1.5 max-h-40 overflow-y-auto pr-1">
             {CATEGORY_ICONS.map(ic => {
               const active = icon === ic.value;
               return (
                 <button 
                   key={ic.value} type="button" onClick={() => setIcon(ic.value)} title={ic.label}
-                  className={`flex flex-col items-center gap-1 p-2 rounded-xl border-2 transition-all text-earth-600 dark:text-earth-300
+                  className={`flex flex-col items-center gap-1 p-2 rounded-xl border-2 transition-all text-earth-600 dark:text-earth-300 min-w-0
                     ${active ? 'border-forest-500 bg-forest-50 dark:bg-forest-900/30' : 'border-transparent hover:border-earth-300 dark:hover:border-earth-600'}`}
                 >
-                  <ic.Icon size={20} />
-                  <span className="text-[9px] leading-tight text-center">{ic.label}</span>
+                  <ic.Icon size={20} className="shrink-0" />
+                  <span className="text-[9px] leading-tight text-center truncate w-full" title={ic.label}>{ic.label}</span>
                 </button>
               );
             })}

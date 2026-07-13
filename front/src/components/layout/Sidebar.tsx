@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { Leaf, Grid, BarChart3, Settings, LogOut, Sun, Moon } from 'lucide-react';
+import { Leaf, Grid, BarChart3, Settings, LogOut, Sun, Moon, Sliders } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { authService } from '../../services/authService';
@@ -60,8 +60,12 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             <BarChart3 size={20} className="shrink-0" />
             <span>Financeiro</span>
           </NavLink>
-          <a href="/admin/" className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium text-earth-600 hover:bg-forest-50 hover:text-forest-700 dark:text-earth-400 dark:hover:bg-forest-900/20 dark:hover:text-forest-300">
+          <NavLink to="/settings" onClick={onClose} className={navLinkClasses}>
             <Settings size={20} className="shrink-0" />
+            <span>Configurações</span>
+          </NavLink>
+          <a href="/admin/" className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium text-earth-600 hover:bg-forest-50 hover:text-forest-700 dark:text-earth-400 dark:hover:bg-forest-900/20 dark:hover:text-forest-300">
+            <Sliders size={20} className="shrink-0" />
             <span>Admin</span>
           </a>
         </nav>

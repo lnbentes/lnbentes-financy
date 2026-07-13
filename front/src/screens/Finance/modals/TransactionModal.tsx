@@ -141,7 +141,7 @@ export function TransactionModal() {
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-earth-700 dark:text-earth-300 mb-1">Valor (R$) *</label>
             <input 
@@ -164,7 +164,7 @@ export function TransactionModal() {
         </div>
 
         {!isTransfer && (
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-earth-700 dark:text-earth-300 mb-1">Método</label>
               <select 
@@ -218,7 +218,7 @@ export function TransactionModal() {
           </div>
         )}
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-earth-700 dark:text-earth-300 mb-1">{isTransfer ? 'Conta origem' : 'Conta'}</label>
             <select 

@@ -4,6 +4,7 @@ import { Layout } from './components/layout/Layout';
 import { Login } from './screens/Login';
 import { Dashboard } from './screens/Dashboard';
 import { Finance } from './screens/Finance';
+import { Settings } from './screens/Settings';
 import { useAuth } from './context/AuthContext';
 
 function PrivateRoute({ children }: { children: ReactNode }) {
@@ -44,6 +45,7 @@ export default function App() {
           <Route index element={<Navigate to="/dashboard" replace />} />
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="finance" element={<Finance />} />
+          <Route path="settings" element={<Settings />} />
         </Route>
         
         <Route path="*" element={<Navigate to="/" replace />} />
