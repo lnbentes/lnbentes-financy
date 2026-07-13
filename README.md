@@ -61,11 +61,13 @@ AppFinanceiro/
 Todos os endpoints da API REST estão sob o prefixo `/api/`:
 
 ### Autenticação & Usuários
+
 - `POST /api/auth/login/` → Realiza o login do usuário
 - `POST /api/auth/logout/` → Realiza o logout do usuário
 - `GET/POST /api/users/` → Gerenciamento de usuários
 
 ### Financeiro
+
 - `GET/POST/PUT/DELETE /api/categories/` → Categorias de transações (ex: Moradia, Alimentação)
 - `GET/POST/PUT/DELETE /api/accounts/` → Contas financeiras (ex: Carteira, Banco Itaú, Nubank)
 - `GET/POST/PUT/DELETE /api/transactions/` → Transações de despesas ou receitas
@@ -77,11 +79,12 @@ Todos os endpoints da API REST estão sob o prefixo `/api/`:
 A aplicação conta com documentação interativa automática gerada com o `drf-spectacular`.
 
 - **Se rodando localmente (porta 8000):**
+
   - **Swagger UI:** [http://localhost:8000/api/schema/swagger-ui/](http://localhost:8000/api/schema/swagger-ui/) (Interface interativa ideal para testar endpoints e requisições)
   - **ReDoc:** [http://localhost:8000/api/schema/redoc/](http://localhost:8000/api/schema/redoc/) (Layout limpo, focado em leitura)
   - **Schema OpenAPI:** [http://localhost:8000/api/schema/](http://localhost:8000/api/schema/) (Especificação bruta em JSON/YAML)
-
 - **Se rodando via Docker (porta 8080):**
+
   - **Swagger UI:** [http://localhost:8080/docs](http://localhost:8080/docs) ou [http://localhost:8080/swagger](http://localhost:8080/swagger) (Redirecionam de forma simplificada para a rota Swagger)
   - **ReDoc:** [http://localhost:8080/api/schema/redoc/](http://localhost:8080/api/schema/redoc/)
   - **Schema OpenAPI:** [http://localhost:8080/api/schema/](http://localhost:8080/api/schema/)
@@ -94,6 +97,7 @@ O Docker configura e inicia automaticamente todo o ambiente (Backend Django, Fro
 
 1. **Configure as credenciais e ambiente (.env):**
    Crie ou edite o arquivo `.env` na raiz do projeto contendo as credenciais do superusuário e configurações padrão:
+
    ```env
    # Django Settings
    DEBUG=False
@@ -106,14 +110,14 @@ O Docker configura e inicia automaticamente todo o ambiente (Backend Django, Fro
    DJANGO_SUPERUSER_PASSWORD=adminpass123
    DJANGO_SUPERUSER_EMAIL=admin@example.com
    ```
-
 2. **Inicie os containers:**
    Abra um terminal no projeto e execute:
+
    ```bash
    docker compose -f docker/docker-compose.yml up --build -d
    ```
-
 3. **Pronto! Acesse o projeto:**
+
    - **Frontend:** [http://localhost:8080](http://localhost:8080)
    - **Django Admin:** [http://localhost:8080/admin/](http://localhost:8080/admin/)
    - **Swagger Docs:** [http://localhost:8080/docs](http://localhost:8080/docs)
@@ -163,6 +167,7 @@ Abra um terminal na pasta raiz do projeto (`AppFinanceiro/`):
    ```bash
    python manage.py runserver
    ```
+
    O servidor backend rodará no endereço: `http://localhost:8000`
 
 ---
@@ -173,7 +178,7 @@ Abra um **segundo terminal** (mantenha o terminal do backend rodando):
 
 1. **Navegue até a pasta do frontend:**
    ```bash
-   cd front-react
+   cd front
    ```
 2. **Instale as dependências do Node:**
    ```bash
@@ -183,6 +188,7 @@ Abra um **segundo terminal** (mantenha o terminal do backend rodando):
    ```bash
    npm run dev
    ```
+
    O frontend estará disponível no endereço: `http://localhost:5173`
 
 *(O Vite está configurado para fazer proxy automático de chamadas `/api/*` diretamente para `http://localhost:8000` para evitar problemas de CORS.)*
@@ -194,11 +200,13 @@ Abra um **segundo terminal** (mantenha o terminal do backend rodando):
 O comando `python manage.py seed_data` cria contas pré-configuradas para facilitar os testes:
 
 ### Usuários da Aplicação
+
 - **Papai:** Usuário: `papai` | Senha: `123456`
 - **Mamãe:** Usuário: `mamae` | Senha: `123456`
 - **Filho:** Usuário: `filho` | Senha: `123456`
 
 ### Administrador do Django (Painel Admin)
+
 - **Se rodando Localmente (porta 8000):**
   - **URL:** [http://localhost:8000/admin/](http://localhost:8000/admin/)
   - **Superusuário:** Usuário: `admin` | Senha: `admin`
@@ -211,10 +219,13 @@ O comando `python manage.py seed_data` cria contas pré-configuradas para facili
 ## 🧪 Testes
 
 Você pode executar os testes automatizados do backend usando o pytest:
+
 ```bash
 pytest
 ```
+
 ou pelo gerenciador do Django:
+
 ```bash
 python manage.py test
 ```
