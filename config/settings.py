@@ -126,7 +126,30 @@ STATICFILES_DIRS = [
 ]
 STATIC_ROOT = Path(os.environ.get('STATIC_ROOT', str(BASE_DIR / 'staticfiles')))
 
-CORS_ALLOW_ALL_ORIGINS = True
+import socket
+
+def get_local_ips():
+    ips = []
+    # Tenta obter o IP principal da máquina conectando-se externamente (sem enviar dados)
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+        if ip:
+            ips.append(ip)
+        s.close()
+    except Exception:
+        pass
+    
+    # Adiciona IPs associados ao hostname
+    try:
+        hostname = socket.gethostname()
+        for ip in socket.gethostbyname_ex(hostname)[2]:
+            if ip not in ips and not ip.startswith('127.'):
+                ips.append(ip)
+    except Exception:
+        pass
+    return ips
 
 csrf_trusted = os.environ.get('CSRF_TRUSTED_ORIGINS')
 if csrf_trusted:
@@ -137,7 +160,30 @@ else:
         'http://127.0.0.1:5173',
         'http://localhost:8000',
         'http://127.0.0.1:8000',
+        'http://localhost:8080',
+        'http://127.0.0.1:8080',
     ]
+
+# Injeta os IPs locais dinamicamente para permitir o funcionamento em rede local
+try:
+    for ip in get_local_ips():
+        CSRF_TRUSTED_ORIGINS.extend([
+            f"http://{ip}",
+            f"https://{ip}",
+            f"http://{ip}:5173",
+            f"http://{ip}:8000",
+            f"http://{ip}:8080",
+        ])
+except Exception:
+    pass
+
+# Remove duplicados
+CSRF_TRUSTED_ORIGINS = list(set(CSRF_TRUSTED_ORIGINS))
+
+# Configurações de CORS com suporte a cookies/credenciais
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOWED_ORIGINS = CSRF_TRUSTED_ORIGINS
+
 
 LOGGING = {
     'version': 1,
