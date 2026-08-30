@@ -4,6 +4,8 @@ import { Layout } from './components/layout/Layout';
 import { Login } from './screens/Login';
 import { Dashboard } from './screens/Dashboard';
 import { Finance } from './screens/Finance';
+import { Budgets } from './screens/Budgets';
+import { Recurring } from './screens/Recurring';
 import { Settings } from './screens/Settings';
 import { useAuth } from './context/AuthContext';
 
@@ -45,6 +47,8 @@ export default function App() {
           <Route index element={<Navigate to="/dashboard" replace />} />
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="finance" element={<Finance />} />
+          <Route path="budgets" element={<Budgets />} />
+          <Route path="recurring" element={<Recurring />} />
           <Route path="settings" element={<Settings />} />
         </Route>
         

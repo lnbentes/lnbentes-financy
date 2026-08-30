@@ -2,6 +2,13 @@ import { createContext, useContext, useState, useEffect, useCallback } from 'rea
 import type { ReactNode } from 'react';
 import { financeService } from '../../services/finance';
 import { extractArray } from '../../utils/helpers';
+import { Logger } from '../../utils/logger';
+import type { 
+  Transaction, 
+  Account, 
+  Category, 
+  MonthlySummary 
+} from '../../types/finance';
 
 interface FinanceContextType {
   month: number;
@@ -15,27 +22,27 @@ interface FinanceContextType {
   setTxType: (t: string) => void;
   
   loading: boolean;
-  summary: any;
-  transactions: any[];
-  accounts: any[];
-  categories: any[];
+  summary: MonthlySummary;
+  transactions: Transaction[];
+  accounts: Account[];
+  categories: Category[];
   
   loadData: () => Promise<void>;
 
   isTransactionModalOpen: boolean;
   setTransactionModalOpen: (b: boolean) => void;
-  selectedTransaction: any;
-  setSelectedTransaction: (t: any) => void;
+  selectedTransaction: Transaction | null;
+  setSelectedTransaction: (t: Transaction | null) => void;
 
   isAccountModalOpen: boolean;
   setAccountModalOpen: (b: boolean) => void;
-  selectedAccount: any;
-  setSelectedAccount: (a: any) => void;
+  selectedAccount: Account | null;
+  setSelectedAccount: (a: Account | null) => void;
 
   isCategoryModalOpen: boolean;
   setCategoryModalOpen: (b: boolean) => void;
-  selectedCategory: any;
-  setSelectedCategory: (c: any) => void;
+  selectedCategory: Category | null;
+  setSelectedCategory: (c: Category | null) => void;
 
   isDataModalOpen: boolean;
   setDataModalOpen: (b: boolean) => void;
@@ -51,22 +58,21 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
   const [txType, setTxType] = useState('');
   
   const [loading, setLoading] = useState(true);
-  const [summary, setSummary] = useState<any>({ income: 0, expense: 0, balance: 0, category_breakdown: [] });
-  const [transactions, setTransactions] = useState<any[]>([]);
-  const [accounts, setAccounts] = useState<any[]>([]);
-  const [categories, setCategories] = useState<any[]>([]);
+  const [summary, setSummary] = useState<MonthlySummary>({ income: 0, expense: 0, balance: 0, category_breakdown: [] });
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
 
   const [isTransactionModalOpen, setTransactionModalOpen] = useState(false);
-  const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
 
   const [isAccountModalOpen, setAccountModalOpen] = useState(false);
-  const [selectedAccount, setSelectedAccount] = useState<any>(null);
+  const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
 
   const [isCategoryModalOpen, setCategoryModalOpen] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<any>(null);
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
 
   const [isDataModalOpen, setDataModalOpen] = useState(false);
-
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -80,12 +86,12 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
         financeService.categories.list()
       ]);
 
-      setSummary(summaryRes?.data || summaryRes || { income: 0, expense: 0, balance: 0, category_breakdown: [] });
+      setSummary(summaryRes || { income: 0, expense: 0, balance: 0, category_breakdown: [] });
       setTransactions(extractArray(transactionsRes));
       setAccounts(extractArray(accountsRes));
       setCategories(extractArray(categoriesRes));
-    } catch (err) {
-      console.error('Error loading finance data', err);
+    } catch (err: unknown) {
+      Logger.error('Erro ao carregar dados financeiros', err);
     } finally {
       setLoading(false);
     }

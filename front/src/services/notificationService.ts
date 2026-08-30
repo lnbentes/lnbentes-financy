@@ -1,5 +1,6 @@
 import { api } from './api';
 import type { RegistrationRequestData } from './registrationService';
+import type { PeerTransfer } from '../types/peerTransfer';
 
 export interface NotificationData {
   id: number;
@@ -8,6 +9,8 @@ export interface NotificationData {
   is_read: boolean;
   registration_request: number | null;
   registration_request_detail: (RegistrationRequestData & { id: number; status: string; created_at: string }) | null;
+  peer_transfer: string | null;
+  peer_transfer_detail: PeerTransfer | null;
   created_at: string;
 }
 

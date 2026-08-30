@@ -20,11 +20,17 @@ class Category(models.Model):
     icon = models.CharField(max_length=50, default='pricetag-outline')
     color = models.CharField(max_length=7, default='#22c55e')
     type = models.CharField(max_length=10, choices=TYPE_CHOICES)
+    created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True, blank=True)
 
     class Meta:
         verbose_name = 'Category'
         verbose_name_plural = 'Categories'
         ordering = ['name']
+        indexes = [
+            models.Index(fields=['user', 'type']),
+            models.Index(fields=['user', 'name']),
+        ]
 
     def __str__(self):
         return self.name

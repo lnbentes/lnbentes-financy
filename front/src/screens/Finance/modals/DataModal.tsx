@@ -4,8 +4,13 @@ import { financeService } from '../../../services/finance';
 import { Modal } from './Modal';
 import { Download, Upload, Trash2, AlertTriangle, FileJson, CheckCircle2 } from 'lucide-react';
 import { ConfirmModal } from '../../../components/common/ConfirmModal';
+import { Logger } from '../../../utils/logger';
+import type { DataImportResult } from '../../../types/finance';
 
-const MONTHS_PT = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+const MONTHS_PT = [
+  'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+];
 
 export function DataModal() {
   const { isDataModalOpen, setDataModalOpen, loadData, accounts } = useFinance();
@@ -14,8 +19,8 @@ export function DataModal() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteMessage, setDeleteMessage] = useState('');
   
-  // Filters
-  const [selectedAccounts, setSelectedAccounts] = useState<number[]>([]);
+  // Filters (UUID strings)
+  const [selectedAccounts, setSelectedAccounts] = useState<string[]>([]);
   const [scope, setScope] = useState<'all' | 'year' | 'month'>('all');
   const [filterYear, setFilterYear] = useState(new Date().getFullYear());
   const [filterMonth, setFilterMonth] = useState(new Date().getMonth() + 1);
@@ -23,8 +28,8 @@ export function DataModal() {
   // Import
   const [importTab, setImportTab] = useState<'file' | 'paste'>('file');
   const [pasteJson, setPasteJson] = useState('');
-  const [pasteAccount, setPasteAccount] = useState<number | ''>('');
-  const [importResult, setImportResult] = useState<any>(null);
+  const [pasteAccount, setPasteAccount] = useState<string>('');
+  const [importResult, setImportResult] = useState<DataImportResult | null>(null);
 
   const yearRange = Array.from({ length: 6 }, (_, i) => new Date().getFullYear() - 2 + i);
 
@@ -70,10 +75,12 @@ export function DataModal() {
 
     try {
       const res = await financeService.transactions.import(formData);
-      setImportResult(res.data || res);
+      setImportResult(res);
       await loadData();
-    } catch (err: any) {
-      setError(err.message || 'Erro ao importar arquivo.');
+    } catch (err: unknown) {
+      const errObj = err as Error;
+      Logger.error('Erro ao importar arquivo:', errObj);
+      setError(errObj.message || 'Erro ao importar arquivo.');
     } finally {
       setLoading(false);
     }
@@ -87,19 +94,20 @@ export function DataModal() {
       rawStr = `[${rawStr}]`;
     }
 
-    let parsed;
+    let parsed: Array<Record<string, unknown>>;
     try {
       parsed = JSON.parse(rawStr);
     } catch (e) {
+      Logger.warn('JSON inválido fornecido no paste import', e);
       setError('JSON inválido. Verifique a sintaxe e tente novamente.');
       return;
     }
 
     // Se houver uma conta selecionada, injeta em cada item
     if (pasteAccount) {
-      const accName = accounts.find(a => a.id === pasteAccount)?.name;
-      if (accName) {
-        parsed = parsed.map((item: any) => ({ ...item, account_name: accName }));
+      const acc = accounts.find(a => a.id === pasteAccount);
+      if (acc) {
+        parsed = parsed.map((item) => ({ ...item, account_name: acc.name, account_id: acc.id }));
       }
     }
 
@@ -109,10 +117,12 @@ export function DataModal() {
 
     try {
       const res = await financeService.transactions.importJson(parsed);
-      setImportResult(res.data || res);
+      setImportResult(res);
       await loadData();
-    } catch (err: any) {
-      setError(err.message || 'Erro ao importar JSON.');
+    } catch (err: unknown) {
+      const errObj = err as Error;
+      Logger.error('Erro ao importar JSON:', errObj);
+      setError(errObj.message || 'Erro ao importar JSON.');
     } finally {
       setLoading(false);
     }
@@ -128,7 +138,7 @@ export function DataModal() {
     
     if (selectedAccounts.length) {
       const accNames = accounts
-        .filter(a => selectedAccounts.includes(Number(a.id)))
+        .filter(a => selectedAccounts.includes(a.id))
         .map(a => a.name)
         .join(', ');
       msg += ` nas contas: ${accNames}`;
@@ -142,17 +152,22 @@ export function DataModal() {
   };
 
   const executeBulkDelete = async () => {
-    const params = getFilterParams();
     setLoading(true);
     setError('');
     setImportResult(null);
 
     try {
-      await financeService.transactions.bulkDelete(params);
+      await financeService.transactions.bulkDelete({
+        account_ids: selectedAccounts.length ? selectedAccounts : undefined,
+        year: scope !== 'all' ? filterYear : undefined,
+        month: scope === 'month' ? filterMonth : undefined,
+      });
       await loadData();
       setDataModalOpen(false);
-    } catch (err: any) {
-      setError(err.message || 'Erro ao deletar dados.');
+    } catch (err: unknown) {
+      const errObj = err as Error;
+      Logger.error('Erro ao excluir dados em lote:', errObj);
+      setError(errObj.message || 'Erro ao deletar dados.');
     } finally {
       setLoading(false);
       setShowDeleteConfirm(false);
@@ -160,7 +175,7 @@ export function DataModal() {
   };
 
   const handleAccountSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const values = Array.from(e.target.selectedOptions).map(opt => parseInt(opt.value));
+    const values = Array.from(e.target.selectedOptions).map(opt => opt.value);
     setSelectedAccounts(values);
   };
 
@@ -184,7 +199,7 @@ export function DataModal() {
             </label>
             <select 
               multiple 
-              value={selectedAccounts.map(String)}
+              value={selectedAccounts}
               onChange={handleAccountSelect}
               className="w-full px-3 py-2 rounded-xl border border-earth-200 dark:border-earth-700 bg-white dark:bg-earth-900 text-sm focus:ring-2 focus:ring-forest-500 outline-none min-h-[70px]"
             >
@@ -199,7 +214,7 @@ export function DataModal() {
             <div>
               <label className="block text-xs font-medium text-earth-600 dark:text-earth-400 mb-1">Período</label>
               <select 
-                value={scope} onChange={e => setScope(e.target.value as any)}
+                value={scope} onChange={e => setScope(e.target.value as 'all' | 'year' | 'month')}
                 className="w-full px-3 py-2 rounded-xl border border-earth-200 dark:border-earth-700 bg-white dark:bg-earth-900 text-sm focus:ring-2 focus:ring-forest-500 outline-none"
               >
                 <option value="all">Tudo</option>
@@ -212,7 +227,7 @@ export function DataModal() {
               <div>
                 <label className="block text-xs font-medium text-earth-600 dark:text-earth-400 mb-1">Ano</label>
                 <select 
-                  value={filterYear} onChange={e => setFilterYear(parseInt(e.target.value))}
+                  value={filterYear} onChange={e => setFilterYear(parseInt(e.target.value, 10))}
                   className="w-full px-3 py-2 rounded-xl border border-earth-200 dark:border-earth-700 bg-white dark:bg-earth-900 text-sm focus:ring-2 focus:ring-forest-500 outline-none"
                 >
                   {yearRange.map(y => <option key={y} value={y}>{y}</option>)}
@@ -224,7 +239,7 @@ export function DataModal() {
               <div>
                 <label className="block text-xs font-medium text-earth-600 dark:text-earth-400 mb-1">Mês</label>
                 <select 
-                  value={filterMonth} onChange={e => setFilterMonth(parseInt(e.target.value))}
+                  value={filterMonth} onChange={e => setFilterMonth(parseInt(e.target.value, 10))}
                   className="w-full px-3 py-2 rounded-xl border border-earth-200 dark:border-earth-700 bg-white dark:bg-earth-900 text-sm focus:ring-2 focus:ring-forest-500 outline-none"
                 >
                   {MONTHS_PT.map((m, i) => <option key={i} value={i + 1}>{m}</option>)}
@@ -266,7 +281,7 @@ export function DataModal() {
           </p>
           <button 
             onClick={handleExport}
-            className="w-full flex items-center justify-center gap-2 bg-forest-600 hover:bg-forest-700 text-white text-sm font-semibold py-2.5 rounded-xl transition-colors"
+            className="w-full flex items-center justify-center gap-2 bg-forest-600 hover:bg-forest-700 text-white text-sm font-semibold py-2.5 rounded-xl transition-colors cursor-pointer"
           >
             <Download size={18} /> Baixar JSON
           </button>
@@ -282,15 +297,15 @@ export function DataModal() {
           <div className="flex rounded-xl overflow-hidden border border-earth-200 dark:border-earth-700 text-xs font-semibold">
             <button 
               onClick={() => setImportTab('file')}
-              className={`flex-1 py-2 transition-colors ${importTab === 'file' ? 'bg-blue-600 text-white' : 'text-earth-600 dark:text-earth-400 hover:bg-earth-100 dark:hover:bg-earth-800'}`}
+              className={`flex-1 py-2 transition-colors cursor-pointer ${importTab === 'file' ? 'bg-blue-600 text-white' : 'text-earth-600 dark:text-earth-400 hover:bg-earth-100 dark:hover:bg-earth-800'}`}
             >
               Arquivo .json
             </button>
             <button 
               onClick={() => setImportTab('paste')}
-              className={`flex-1 py-2 transition-colors ${importTab === 'paste' ? 'bg-blue-600 text-white' : 'text-earth-600 dark:text-earth-400 hover:bg-earth-100 dark:hover:bg-earth-800'}`}
+              className={`flex-1 py-2 transition-colors cursor-pointer ${importTab === 'paste' ? 'bg-blue-600 text-white' : 'text-earth-600 dark:text-earth-400 hover:bg-earth-100 dark:hover:bg-earth-800'}`}
             >
-              Colar / API
+              Colar / JSON
             </button>
           </div>
 
@@ -310,7 +325,7 @@ export function DataModal() {
           {importTab === 'paste' && (
             <div className="space-y-3">
               <p className="text-xs text-earth-500">
-                Cole diretamente as transações. Ideal para integrações e envios em lote. Você não precisa colocar os colchetes [ ] se for copiar vários.
+                Cole diretamente as transações em formato JSON. Se desejar vincular todas a uma conta específica, selecione-a abaixo.
               </p>
 
               <div>
@@ -319,7 +334,7 @@ export function DataModal() {
                 </label>
                 <select 
                   value={pasteAccount} 
-                  onChange={e => setPasteAccount(e.target.value ? parseInt(e.target.value) : '')}
+                  onChange={e => setPasteAccount(e.target.value)}
                   className="w-full px-3 py-2 rounded-xl border border-earth-200 dark:border-earth-700 bg-white dark:bg-earth-900 text-sm focus:ring-2 focus:ring-forest-500 outline-none"
                 >
                   <option value="">Usar conta do JSON original</option>
@@ -353,7 +368,7 @@ export function DataModal() {
               <button 
                 onClick={handleImportPaste}
                 disabled={loading}
-                className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2.5 rounded-xl transition-colors disabled:opacity-50"
+                className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2.5 rounded-xl transition-colors disabled:opacity-50 cursor-pointer"
               >
                 <FileJson size={18} /> {loading ? 'Importando...' : 'Importar JSON'}
               </button>
@@ -372,7 +387,7 @@ export function DataModal() {
           <button 
             onClick={handleBulkDelete}
             disabled={loading}
-            className="w-full flex justify-center items-center gap-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold py-2.5 rounded-xl transition-colors disabled:opacity-50"
+            className="w-full flex justify-center items-center gap-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold py-2.5 rounded-xl transition-colors disabled:opacity-50 cursor-pointer"
           >
             <AlertTriangle size={18} /> Excluir transações do escopo
           </button>

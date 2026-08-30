@@ -1,54 +1,54 @@
 # 💰 App Financeiro - Gerenciador de Finanças Pessoais
 
-Aplicação moderna para controle financeiro pessoal e familiar, desenvolvida com um backend robusto em Django (Python) e um frontend interativo e dinâmico em React (TypeScript).
+Aplicação moderna para controle financeiro pessoal e familiar, desenvolvida com um backend robusto em Django (Python), um frontend dinâmico em React (TypeScript) com PWA e um Portal Administrativo dedicado para gerenciamento do sistema.
 
 ---
 
 ## 🏗️ Arquitetura & Tecnologias
 
-- **Backend:** Django 5.x, Django REST Framework (DRF)
-- **Frontend:** React 19, TypeScript, Vite, Tailwind CSS v4, Lucide React
-- **Autenticação:** Baseada em sessão padrão do Django / DRF
-- **Documentação de API:** Swagger (via `drf-spectacular`)
-- **Banco de Dados:** SQLite (local)
+- **Backend:** Django 5.x, Django REST Framework (DRF) com Throttling e Segurança Multi-tenant.
+- **Frontend Principal:** React 19, TypeScript, Vite, Tailwind CSS, PWA (Progressive Web App), Lucide React, Chart.js.
+- **Portal Administrativo:** Interface web integrada (`front_admin`) para gestão de usuários, aprovação de cadastros e manutenção do banco de dados.
+- **Autenticação:** Baseada em sessão padrão do Django / DRF.
+- **Documentação de API:** Swagger e ReDoc (via `drf-spectacular`).
+- **Banco de Dados:** SQLite (com suporte a otimização `VACUUM` e backups consolidados).
 
 ---
 
 ## 📁 Estrutura do Projeto
 
-O projeto é estruturado de forma a separar claramente as responsabilidades de backend (Django) e frontend (React):
+O projeto é estruturado de forma modular e escalável:
 
 ```
 AppFinanceiro/
-├── app_core/             # App principal do Django (Backend)
+├── app_core/             # App principal do Django (Backend API)
 │   ├── management/       # Comandos customizados (ex: seed_data para popular dados)
 │   ├── migrations/       # Arquivos de migração do banco de dados
-│   ├── models/           # Definição das tabelas no banco de dados
-│   │   └── finance/      # Apenas modelos financeiros (Account, Category, Transaction)
+│   ├── models/           # Entidades (Account, Category, Transaction, RegistrationRequest, Notification)
 │   ├── routes/           # Rotas/Endpoints da API divididos por escopo
-│   │   ├── auth.py       # Endpoints de login, logout e usuários
+│   │   ├── auth.py       # Endpoints de login, logout, usuários e admin do sistema
 │   │   └── finance.py    # Endpoints de contas, categorias e transações
-│   ├── serializers/      # Serializadores do Django REST Framework (DRF)
-│   ├── services/         # Camada de regras de negócio e serviços financeiros
+│   ├── serializers/      # Serializadores DRF com validações multi-tenant
+│   ├── services/         # Camada de regras de negócio
 │   │   ├── account.py    # Lógica de atualização e validação de contas
 │   │   ├── category.py   # Lógica associada a categorias
-│   │   ├── data_io.py    # Importação/Exportação de dados financeiros
+│   │   ├── data_io.py    # Importação/Exportação e exclusão em lote
+│   │   ├── registration.py # Fluxo seguro de solicitação e aprovação de usuários
 │   │   ├── report.py     # Geração de relatórios financeiros e estatísticas
 │   │   └── transaction.py# Criação, edição e exclusão de transações
 │   └── views/            # ViewSets e Controllers dos endpoints REST
-├── config/               # Configurações globais do projeto Django (settings.py, urls.py)
-├── front-react/          # Frontend moderno desenvolvido em React
+├── config/               # Configurações globais do Django (settings.py, urls.py)
+├── front/                # Frontend principal em React + TypeScript + Vite + PWA
 │   ├── src/
-│   │   ├── components/   # Componentes reutilizáveis (Layout, Sidebar, Header, UI Elements)
-│   │   ├── context/      # Contextos e estados globais (Ex: AuthContext)
-│   │   ├── screens/      # Telas principais da aplicação
-│   │   │   ├── Finance/  # Tela de gestão financeira (contas, transações, filtros)
-│   │   │   ├── Dashboard.tsx # Painel principal com gráficos e resumos
-│   │   │   └── Login.tsx # Tela de login
-│   │   ├── services/     # Requisições HTTP (Axios) integrando com o Django
-│   │   └── utils/        # Funções utilitárias e formatadores
-│   └── vite.config.ts    # Configuração do Vite com Proxy reverso para o Django na porta 8000
-├── front/                # Frontend legado / Fallback (Django Templates + Vanilla JS)
+│   │   ├── components/   # Componentes reutilizáveis (Layout, Modais, Cards)
+│   │   ├── context/      # Contextos e estados globais (AuthContext, FinanceContext)
+│   │   ├── screens/      # Telas principais (Dashboard, Finance, Login, Register)
+│   │   ├── services/     # Clientes de API fortemente tipados
+│   │   ├── types/        # Definições de tipos TypeScript estritos (finance.ts, auth.ts)
+│   │   └── utils/        # Formatadores, helpers e utilitário de Logger
+├── front_admin/          # Portal Administrativo Web (Django Templates + Vanilla JS + Tailwind)
+│   ├── static/           # Scripts administrativos (admin_api.js, admin_app.js)
+│   └── templates/        # Template do portal (portal_admin.html)
 ├── requirements.txt      # Dependências do Python (Backend)
 ├── manage.py             # CLI do Django
 └── db.sqlite3            # Banco de dados SQLite local
@@ -60,127 +60,104 @@ AppFinanceiro/
 
 Todos os endpoints da API REST estão sob o prefixo `/api/`:
 
-### Autenticação & Usuários
+### Autenticação, Usuários & Cadastros
 
-- `POST /api/auth/login/` → Realiza o login do usuário
-- `POST /api/auth/logout/` → Realiza o logout do usuário
-- `GET/POST /api/users/` → Gerenciamento de usuários
+- `POST /api/auth/login/` → Realiza o login do usuário.
+- `POST /api/auth/logout/` → Realiza o logout do usuário.
+- `GET/POST /api/users/` → Listagem e criação de usuários (restrito).
+- `POST /api/users/{id}/toggle-active/` → Ativa ou inativa um usuário.
+- `POST /api/users/{id}/toggle-staff/` → Alterna privilégios de Administrador/Staff.
+- `POST /api/users/{id}/reset-password/` → Redefine a senha de um usuário.
+- `GET/POST /api/registration-requests/` → Solicitações públicas de cadastro (com rate limit).
+- `POST /api/registration-requests/{id}/approve/` → Aprova solicitação e cria o usuário.
+- `POST /api/registration-requests/{id}/reject/` → Rejeita solicitação de cadastro.
+- `GET/POST /api/notifications/` → Notificações do sistema para administradores.
 
-### Financeiro
+### Módulo Financeiro
 
-- `GET/POST/PUT/DELETE /api/categories/` → Categorias de transações (ex: Moradia, Alimentação)
-- `GET/POST/PUT/DELETE /api/accounts/` → Contas financeiras (ex: Carteira, Banco Itaú, Nubank)
-- `GET/POST/PUT/DELETE /api/transactions/` → Transações de despesas ou receitas
+- `GET/POST/PUT/DELETE /api/categories/` → Categorias (Moradia, Alimentação, etc.).
+- `GET/POST/PUT/DELETE /api/accounts/` → Contas financeiras (Carteira, Bancos, Investimentos).
+- `GET/POST/PUT/DELETE /api/transactions/` → Transações de despesas, receitas e transferências.
+- `GET /api/reports/monthly-summary/` → Resumo financeiro mensal e saldo total.
+- `GET /api/reports/category-breakdown/` → Distribuição de despesas por categoria.
+- `GET/POST /api/data/export/` & `POST /api/data/import/` → Exportação e importação de dados.
+- `POST /api/data/delete-bulk/` → Exclusão em lote com reversão de saldos.
+
+### Sistema & Manutenção do Banco (Admin)
+
+- `GET /api/admin/stats/` → Métricas do sistema e contagem de registros por tabela.
+- `POST /api/admin/db-maintenance/` → Otimização da base SQLite (`VACUUM` e teste de integridade).
+- `GET /api/admin/db-backup/` → Download de backup consolidado em JSON.
+
+---
+
+## 🛡️ Portal Administrativo (`front_admin`)
+
+A aplicação conta com um **Portal Administrativo Dedicado** para gestão operacional do sistema:
+
+- **URL de Acesso:** [http://localhost:8000/portal-admin/](http://localhost:8000/portal-admin/)
+- **Recursos Disponíveis:**
+  - 📊 **Visão Geral:** Dashboard com métricas de usuários, solicitações, transações e uso de disco.
+  - 📝 **Solicitações de Cadastro:** Aprovação ou rejeição de novos pedidos de conta com 1 clique.
+  - 👥 **Gestão de Usuários:** Criação de contas, busca em tempo real, alternância de status ativo/inativo, controle de Staff e redefinição de senhas.
+  - 🗄️ **Banco de Dados & Sistema:** Informações do arquivo SQLite, contadores por entidade, execução de `VACUUM` e download de backup geral em JSON.
+  - 🔔 **Notificações:** Central de alertas de sistema com leitura individual ou em massa.
+  - 🌓 **Tema Dark/Light:** Interface responsiva com alternador de tema.
 
 ---
 
 ## 📖 Documentação Interativa da API (Swagger / ReDoc)
 
-A aplicação conta com documentação interativa automática gerada com o `drf-spectacular`.
-
-- **Se rodando localmente (porta 8000):**
-
-  - **Swagger UI:** [http://localhost:8000/api/schema/swagger-ui/](http://localhost:8000/api/schema/swagger-ui/) (Interface interativa ideal para testar endpoints e requisições)
-  - **ReDoc:** [http://localhost:8000/api/schema/redoc/](http://localhost:8000/api/schema/redoc/) (Layout limpo, focado em leitura)
-  - **Schema OpenAPI:** [http://localhost:8000/api/schema/](http://localhost:8000/api/schema/) (Especificação bruta em JSON/YAML)
-- **Se rodando via Docker (porta 8080):**
-
-  - **Swagger UI:** [http://localhost:8080/docs](http://localhost:8080/docs) ou [http://localhost:8080/swagger](http://localhost:8080/swagger) (Redirecionam de forma simplificada para a rota Swagger)
-  - **ReDoc:** [http://localhost:8080/api/schema/redoc/](http://localhost:8080/api/schema/redoc/)
-  - **Schema OpenAPI:** [http://localhost:8080/api/schema/](http://localhost:8080/api/schema/)
-
----
-
-## 🐳 Como Rodar o Projeto com Docker (Recomendado)
-
-O Docker configura e inicia automaticamente todo o ambiente (Backend Django, Frontend React compilado no Nginx e volume do banco de dados).
-
-1. **Configure as credenciais e ambiente (.env):**
-   Crie ou edite o arquivo `.env` na raiz do projeto contendo as credenciais do superusuário e configurações padrão:
-
-   ```env
-   # Django Settings
-   DEBUG=False
-   SECRET_KEY=django-insecure-production-key-change-me-12345
-   ALLOWED_HOSTS=*
-   CSRF_TRUSTED_ORIGINS=http://localhost:8080,http://127.0.0.1:8080,http://localhost,http://127.0.0.1
-
-   # Django Admin Superuser Credentials
-   DJANGO_SUPERUSER_USERNAME=admin
-   DJANGO_SUPERUSER_PASSWORD=adminpass123
-   DJANGO_SUPERUSER_EMAIL=admin@example.com
-   ```
-2. **Inicie os containers:**
-   Abra um terminal no projeto e execute:
-
-   ```bash
-   docker compose -f docker/docker-compose.yml up --build -d
-   ```
-3. **Pronto! Acesse o projeto:**
-
-   - **Frontend:** [http://localhost:8080](http://localhost:8080)
-   - **Django Admin:** [http://localhost:8080/admin/](http://localhost:8080/admin/)
-   - **Swagger Docs:** [http://localhost:8080/docs](http://localhost:8080/docs)
-
-*Nota: Na primeira execução, o banco é migrado automaticamente e o superusuário configurado no `.env` é criado no banco.*
+- **Swagger UI:** [http://localhost:8000/api/schema/swagger-ui/](http://localhost:8000/api/schema/swagger-ui/)
+- **ReDoc:** [http://localhost:8000/api/schema/redoc/](http://localhost:8000/api/schema/redoc/)
+- **OpenAPI Schema:** [http://localhost:8000/api/schema/](http://localhost:8000/api/schema/)
 
 ---
 
 ## 🚀 Como Rodar o Projeto Localmente
 
-Para rodar o projeto por completo, você deve iniciar tanto o servidor do **Backend (Django)** quanto o do **Frontend (React)** simultaneamente.
-
 ### 1️⃣ Inicializando o Backend (Django)
 
-Abra um terminal na pasta raiz do projeto (`AppFinanceiro/`):
-
-1. **Crie o ambiente virtual (venv):**
-   ```powershell
-   python -m venv venv
-   ```
-2. **Ative o ambiente virtual:**
+1. **Crie e ative o ambiente virtual:**
    - No Windows (PowerShell):
      ```powershell
+     python -m venv venv
      .\venv\Scripts\activate
-     ```
-   - No Windows (CMD):
-     ```cmd
-     .\venv\Scripts\activate.bat
      ```
    - No Linux/macOS:
      ```bash
+     python3 -m venv venv
      source venv/bin/activate
      ```
-3. **Instale as dependências do Python:**
+2. **Instale as dependências:**
    ```bash
    pip install -r requirements.txt
    ```
-4. **Execute as migrações do banco de dados:**
+3. **Execute as migrações:**
    ```bash
    python manage.py migrate
    ```
-5. **Popule o banco com dados fictícios (Seed):**
+4. **Popule com dados iniciais de teste (opcional):**
    ```bash
    python manage.py seed_data
    ```
-6. **Inicie o servidor de desenvolvimento do Django:**
+5. **Inicie o servidor:**
    ```bash
    python manage.py runserver
    ```
-
-   O servidor backend rodará no endereço: `http://localhost:8000`
+   *Servidor rodando em: `http://localhost:8000`*
 
 ---
 
 ### 2️⃣ Inicializando o Frontend (React)
 
-Abra um **segundo terminal** (mantenha o terminal do backend rodando):
+Abra um **segundo terminal**:
 
-1. **Navegue até a pasta do frontend:**
+1. **Acesse a pasta do frontend:**
    ```bash
    cd front
    ```
-2. **Instale as dependências do Node:**
+2. **Instale as dependências:**
    ```bash
    npm install
    ```
@@ -188,46 +165,34 @@ Abra um **segundo terminal** (mantenha o terminal do backend rodando):
    ```bash
    npm run dev
    ```
+   *Frontend disponível em: `http://localhost:5173`*
 
-   O frontend estará disponível no endereço: `http://localhost:5173`
-
-*(O Vite está configurado para fazer proxy automático de chamadas `/api/*` diretamente para `http://localhost:8000` para evitar problemas de CORS.)*
-
----
-
-## 🔐 Contas de Acesso para Testes
-
-O comando `python manage.py seed_data` cria contas pré-configuradas para facilitar os testes:
-
-### Usuários da Aplicação
-
-- **Papai:** Usuário: `papai` | Senha: `123456`
-- **Mamãe:** Usuário: `mamae` | Senha: `123456`
-- **Filho:** Usuário: `filho` | Senha: `123456`
-
-### Administrador do Django (Painel Admin)
-
-- **Se rodando Localmente (porta 8000):**
-  - **URL:** [http://localhost:8000/admin/](http://localhost:8000/admin/)
-  - **Superusuário:** Usuário: `admin` | Senha: `admin`
-- **Se rodando via Docker (porta 8080):**
-  - **URL:** [http://localhost:8080/admin/](http://localhost:8080/admin/)
-  - **Superusuário:** Usuário e Senha definidos no seu arquivo [`.env`](file:///c:/Users/lnbentes/LnB/projetos/AppFinanceiro/.env) (ex: `admin` | `adminpass123`)
+4. **Para gerar a build de produção do PWA:**
+   ```bash
+   npm run build
+   ```
 
 ---
 
-## 🧪 Testes
+## 🔐 Contas de Acesso para Testes (`seed_data`)
 
-Você pode executar os testes automatizados do backend usando o pytest:
+- **Usuários Comuns:**
+  - Papai: `papai` / `123456`
+  - Mamãe: `mamae` / `123456`
+  - Filho: `filho` / `123456`
+- **Administrador:**
+  - Usuário: `admin` / `admin`
+  - Acesso ao Portal Admin: [http://localhost:8000/portal-admin/](http://localhost:8000/portal-admin/)
+  - Acesso ao Django Admin padrão: [http://localhost:8000/admin/](http://localhost:8000/admin/)
 
-```bash
-pytest
-```
+---
 
-ou pelo gerenciador do Django:
+## 🧪 Testes Automatizados
 
-```bash
-python manage.py test
+Para rodar a suíte completa de testes do backend:
+
+```powershell
+.\venv\Scripts\python.exe manage.py test app_core
 ```
 
 ---

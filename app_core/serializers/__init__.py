@@ -2,6 +2,7 @@ from .user import UserSerializer, LoginSerializer
 from .finance import CategorySerializer, AccountSerializer, TransactionSerializer
 from .registration import RegistrationRequestSerializer
 from .notification import NotificationSerializer
+from .peer_transfer import PeerTransferSerializer, SendPeerTransferSerializer, AcceptPeerTransferSerializer
 
 __all__ = [
     'UserSerializer',
@@ -10,5 +11,8 @@ __all__ = [
     'AccountSerializer',
     'TransactionSerializer',
     'RegistrationRequestSerializer',
-    'NotificationSerializer'
+    'NotificationSerializer',
+    'PeerTransferSerializer',
+    'SendPeerTransferSerializer',
+    'AcceptPeerTransferSerializer',
 ]

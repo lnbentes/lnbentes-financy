@@ -19,7 +19,7 @@ RUN pip install --no-cache-dir -r requirements.txt gunicorn
 # Copy backend source folders and entry files
 COPY app_core /app/app_core/
 COPY config /app/config/
-COPY front /app/front/
+COPY front_admin /app/front_admin/
 COPY manage.py /app/
 
 # Copy the entrypoint script

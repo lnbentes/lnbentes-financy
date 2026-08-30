@@ -191,3 +191,177 @@ class TransactionService:
         count = transactions.count()
         transactions.delete()
         logger.info('%d transações excluídas do grupo=%s', count, group_id)
+
+    # ── Gestão e Antecipação de Parcelamentos ─────────────────────────────────
+
+    @staticmethod
+    def get_installment_groups(user):
+        """Retorna uma lista resumida de todas as compras parceladas do usuário."""
+        today = date.today()
+        groups_qs = (
+            Transaction.objects.filter(user=user, installment_id_group__isnull=False)
+            .order_by()
+            .values_list('installment_id_group', flat=True)
+            .distinct()
+        )
+
+        result = []
+        for group_id in groups_qs:
+            txs = list(
+                Transaction.objects.filter(user=user, installment_id_group=group_id)
+                .select_related('account', 'category')
+                .order_by('installment_current')
+            )
+            if not txs:
+                continue
+
+            first_tx = txs[0]
+            total_installments = first_tx.installment_total or len(txs)
+            
+            paid_txs = [t for t in txs if t.date <= today]
+            future_txs = [t for t in txs if t.date > today]
+
+            total_amount = sum(t.amount for t in txs)
+            paid_amount = sum(t.amount for t in paid_txs)
+            remaining_amount = sum(t.amount for t in future_txs)
+
+            first_date = txs[0].date
+            last_date = txs[-1].date
+
+            serialized_txs = []
+            for t in txs:
+                serialized_txs.append({
+                    'id': str(t.id),
+                    'description': t.description,
+                    'amount': float(t.amount),
+                    'date': t.date.isoformat(),
+                    'installment_current': t.installment_current,
+                    'installment_total': t.installment_total,
+                    'is_paid': t.date <= today,
+                    'balance_applied': t.balance_applied,
+                })
+
+            result.append({
+                'group_id': group_id,
+                'description': first_tx.description,
+                'account_id': str(first_tx.account_id) if first_tx.account_id else None,
+                'account_name': first_tx.account.name if first_tx.account else 'Sem Conta',
+                'account_color': first_tx.account.color if first_tx.account else '#888',
+                'category_id': str(first_tx.category_id) if first_tx.category_id else None,
+                'category_name': first_tx.category.name if first_tx.category else 'Geral',
+                'category_color': first_tx.category.color if first_tx.category else '#22c55e',
+                'category_icon': first_tx.category.icon if first_tx.category else 'pricetag-outline',
+                'installment_total': total_installments,
+                'paid_count': len(paid_txs),
+                'remaining_count': len(future_txs),
+                'total_amount': float(total_amount),
+                'paid_amount': float(paid_amount),
+                'remaining_amount': float(remaining_amount),
+                'first_date': first_date.isoformat(),
+                'last_date': last_date.isoformat(),
+                'status': 'PAID' if len(future_txs) == 0 else 'ACTIVE',
+                'transactions': serialized_txs,
+            })
+
+        # Ordena com os que possuem parcelas pendentes primeiro
+        result.sort(key=lambda g: (0 if g['remaining_count'] > 0 else 1, g['first_date']), reverse=False)
+        return result
+
+    @staticmethod
+    def anticipate_installments(user, group_id, count=1, target_date=None, discount_amount=Decimal('0.00')):
+        """
+        Adiantar `count` parcelas futuras para `target_date` (padrão: hoje),
+        com desconto opcional e reajuste cronológico das parcelas futuras restantes.
+        """
+        import calendar
+        target_date = target_date or date.today()
+        count = int(count)
+        discount_amount = Decimal(str(discount_amount or 0))
+
+        txs = list(
+            Transaction.objects.filter(user=user, installment_id_group=group_id)
+            .order_by('installment_current')
+        )
+        if not txs:
+            raise ValueError('Grupo de parcelamento não encontrado.')
+
+        # Identifica parcelas futuras (que ainda não chegaram à target_date)
+        future_txs = [t for t in txs if t.date > target_date]
+        if not future_txs:
+            raise ValueError('Não há parcelas futuras para antecipar neste parcelamento.')
+
+        count = min(count, len(future_txs))
+        to_anticipate = future_txs[:count]
+        remaining_future = future_txs[count:]
+
+        # Distribui eventual desconto entre as parcelas antecipadas
+        discount_per_tx = (discount_amount / count).quantize(Decimal('0.01')) if count > 0 else Decimal('0')
+        discount_remainder = discount_amount - (discount_per_tx * count)
+
+        with db_transaction.atomic():
+            # 1. Atualiza as parcelas adiantadas para a target_date
+            for idx, tx in enumerate(to_anticipate):
+                TransactionService._reverse_balance(tx)
+                tx.date = target_date
+
+                if discount_amount > 0:
+                    item_discount = discount_per_tx + (discount_remainder if idx == 0 else Decimal('0'))
+                    new_amount = max(Decimal('0.01'), tx.amount - item_discount)
+                    tx.amount = new_amount
+
+                tx.save()
+                TransactionService._apply_balance(tx)
+
+            # 2. Reajusta as datas das parcelas futuras restantes sem deixar buracos
+            base_month = target_date.month
+            base_year = target_date.year
+            base_day = target_date.day
+
+            for idx, tx in enumerate(remaining_future):
+                TransactionService._reverse_balance(tx)
+
+                total_months = base_month + idx
+                y = base_year + total_months // 12
+                m = total_months % 12 + 1
+                last_day = calendar.monthrange(y, m)[1]
+                new_day = min(base_day, last_day)
+
+                tx.date = date(y, m, new_day)
+                tx.save()
+                TransactionService._apply_balance(tx)
+
+        logger.info(
+            'Antecipadas %d parcelas do grupo=%s para %s com desconto=%s por user=%s',
+            count, group_id, target_date, discount_amount, user.id
+        )
+        return {
+            'group_id': group_id,
+            'anticipated_count': count,
+            'target_date': target_date.isoformat(),
+            'discount_applied': float(discount_amount),
+            'remaining_count': len(remaining_future),
+        }
+
+    @staticmethod
+    def payoff_installment_group(user, group_id, target_date=None, discount_amount=Decimal('0.00')):
+        """Quita todas as parcelas pendentes de um grupo adiantando-as para `target_date`."""
+        target_date = target_date or date.today()
+        txs = list(
+            Transaction.objects.filter(user=user, installment_id_group=group_id)
+            .order_by('installment_current')
+        )
+        if not txs:
+            raise ValueError('Grupo de parcelamento não encontrado.')
+
+        future_txs = [t for t in txs if t.date > target_date]
+        if not future_txs:
+            raise ValueError('Todas as parcelas deste grupo já estão quitadas ou vencidas.')
+
+        return TransactionService.anticipate_installments(
+            user=user,
+            group_id=group_id,
+            count=len(future_txs),
+            target_date=target_date,
+            discount_amount=discount_amount
+        )
+

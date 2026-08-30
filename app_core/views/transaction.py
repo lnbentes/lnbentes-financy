@@ -235,3 +235,98 @@ class TransactionViewSet(viewsets.ModelViewSet):
             month=month,
         )
         return Response(result, status=status.HTTP_200_OK)
+
+    # ── Gestão e Antecipação de Compras Parceladas ────────────────────────────
+
+    @extend_schema(
+        summary="Listar compras parceladas",
+        description="Retorna todas as compras parceladas do usuário com status de pagamento, parcelas pagas/pendentes e projeção.",
+        responses={200: OpenApiTypes.OBJECT}
+    )
+    @action(detail=False, methods=['get'], url_path='installments')
+    def list_installments(self, request):
+        """
+        Caminho: /api/transactions/installments/
+        """
+        data = TransactionService.get_installment_groups(request.user)
+        return Response(data, status=status.HTTP_200_OK)
+
+    @extend_schema(
+        summary="Antecipar parcelas de uma compra parcelada",
+        description="Adiantar N parcelas futuras de um parcelamento para a data indicada com desconto opcional e reajuste automático das parcelas restantes.",
+        request=inline_serializer(
+            name='AnticipateInstallmentsRequest',
+            fields={
+                'count': serializers.IntegerField(required=False, default=1, min_value=1, help_text="Quantidade de parcelas a adiantar"),
+                'target_date': serializers.DateField(required=False, help_text="Data de vencimento desejada para as parcelas adiantadas (padrão: hoje)"),
+                'discount_amount': serializers.DecimalField(max_digits=10, decimal_places=2, required=False, default=0.0, help_text="Valor total do desconto concedido"),
+            }
+        ),
+        responses={200: OpenApiTypes.OBJECT}
+    )
+    @action(detail=False, methods=['post'], url_path=r'installments/(?P<group_id>[^/.]+)/anticipate')
+    def anticipate_installments(self, request, group_id=None):
+        """
+        Caminho: /api/transactions/installments/{group_id}/anticipate/
+        """
+        count = request.data.get('count', 1)
+        target_date_str = request.data.get('target_date')
+        discount_amount = request.data.get('discount_amount', 0.0)
+
+        target_date = None
+        if target_date_str:
+            try:
+                target_date = date.fromisoformat(str(target_date_str))
+            except ValueError:
+                return Response({'error': 'Formato de data inválido. Use AAAA-MM-DD.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            result = TransactionService.anticipate_installments(
+                user=request.user,
+                group_id=group_id,
+                count=count,
+                target_date=target_date,
+                discount_amount=discount_amount
+            )
+            return Response(result, status=status.HTTP_200_OK)
+        except ValueError as err:
+            return Response({'error': str(err)}, status=status.HTTP_400_BAD_REQUEST)
+
+    @extend_schema(
+        summary="Quitar compra parcelada",
+        description="Adiantar todas as parcelas futuras restantes para a data de quitação com desconto opcional.",
+        request=inline_serializer(
+            name='PayoffInstallmentsRequest',
+            fields={
+                'target_date': serializers.DateField(required=False, help_text="Data de quitação desejada (padrão: hoje)"),
+                'discount_amount': serializers.DecimalField(max_digits=10, decimal_places=2, required=False, default=0.0, help_text="Valor total do desconto"),
+            }
+        ),
+        responses={200: OpenApiTypes.OBJECT}
+    )
+    @action(detail=False, methods=['post'], url_path=r'installments/(?P<group_id>[^/.]+)/payoff')
+    def payoff_installments(self, request, group_id=None):
+        """
+        Caminho: /api/transactions/installments/{group_id}/payoff/
+        """
+        target_date_str = request.data.get('target_date')
+        discount_amount = request.data.get('discount_amount', 0.0)
+
+        target_date = None
+        if target_date_str:
+            try:
+                target_date = date.fromisoformat(str(target_date_str))
+            except ValueError:
+                return Response({'error': 'Formato de data inválido. Use AAAA-MM-DD.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            result = TransactionService.payoff_installment_group(
+                user=request.user,
+                group_id=group_id,
+                target_date=target_date,
+                discount_amount=discount_amount
+            )
+            return Response(result, status=status.HTTP_200_OK)
+        except ValueError as err:
+            return Response({'error': str(err)}, status=status.HTTP_400_BAD_REQUEST)
+

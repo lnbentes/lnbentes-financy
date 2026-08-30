@@ -2,15 +2,7 @@ import { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { usersService } from '../services/usersService';
 import { extractArray } from '../utils/helpers';
-
-interface User {
-  id: number;
-  username: string;
-  first_name?: string;
-  name?: string;
-  is_staff?: boolean;
-  is_superuser?: boolean;
-}
+import type { User } from '../types/auth';
 
 interface AuthContextType {
   user: User | null;
@@ -28,14 +20,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const checkAuth = async () => {
     try {
       setLoading(true);
-      const users = await usersService.list() as any;
-      const usersList = extractArray(users);
+      const users = await usersService.list();
+      const usersList: User[] = extractArray(users);
       if (usersList.length > 0) {
         setUser(usersList[0]);
       } else {
         setUser(null);
       }
-    } catch (err) {
+    } catch {
       setUser(null);
     } finally {
       setLoading(false);

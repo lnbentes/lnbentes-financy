@@ -7,10 +7,13 @@ services:
       - db_data:/app/data
       - django_static:/app/staticfiles
     env_file:
-      - ../.env
+      - path: ../.env
+        required: false
     environment:
       - DATABASE_PATH=/app/data/db.sqlite3
       - STATIC_ROOT=/app/staticfiles
+      - ALLOWED_HOSTS=*
+      - CSRF_TRUSTED_ORIGINS=http://localhost:8080,http://127.0.0.1:8080,http://localhost,http://127.0.0.1
     expose:
       - "8000"
     restart: always

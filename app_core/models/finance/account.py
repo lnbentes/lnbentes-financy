@@ -22,11 +22,16 @@ class Account(models.Model):
     type = models.CharField(max_length=15, choices=TYPE_CHOICES)
     color = models.CharField(max_length=7, default='#22c55e')
     icon = models.CharField(max_length=50, default='wallet-outline')
+    created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True, blank=True)
 
     class Meta:
         verbose_name = 'Account'
         verbose_name_plural = 'Accounts'
         ordering = ['name']
+        indexes = [
+            models.Index(fields=['user', 'name']),
+        ]
 
     def __str__(self):
         return self.name

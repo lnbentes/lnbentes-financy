@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'drf_spectacular',
     'corsheaders',
     'app_core',
+    'front_admin',
 ]
 
 MIDDLEWARE = [
@@ -60,7 +61,10 @@ ROOT_URLCONF = 'config.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'front' / 'templates'],
+        'DIRS': [
+            BASE_DIR / 'front_admin' / 'templates',
+            BASE_DIR / 'front' / 'templates',
+        ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -122,7 +126,10 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [
-    BASE_DIR / "front" / "static",
+    p for p in [
+        BASE_DIR / "front_admin" / "static",
+        BASE_DIR / "front" / "static",
+    ] if p.exists()
 ]
 STATIC_ROOT = Path(os.environ.get('STATIC_ROOT', str(BASE_DIR / 'staticfiles')))
 
@@ -206,6 +213,16 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle',
+        'rest_framework.throttling.ScopedRateThrottle',
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '100/minute',
+        'user': '1000/minute',
+        'registration': '30/minute',
+    },
 }
 
 SPECTACULAR_SETTINGS = {

@@ -57,6 +57,11 @@ def approve_registration_request(request_id, admin_user):
         raise ValueError("Pedido de cadastro pendente não encontrado.")
 
     with transaction.atomic():
+        if User.objects.filter(username__iexact=req.username).exists():
+            raise ValueError(f"O nome de usuário '{req.username}' já está em uso por outra conta.")
+        if User.objects.filter(email__iexact=req.email).exists():
+            raise ValueError(f"O e-mail '{req.email}' já está em uso por outra conta.")
+
         # Criar o usuário
         user = User(
             username=req.username,
@@ -75,7 +80,7 @@ def approve_registration_request(request_id, admin_user):
         # Marcar todas as notificações associadas como lidas
         Notification.objects.filter(registration_request=req).update(is_read=True)
         
-        logger.info("Pedido de cadastro %d aprovado por admin %s.", request_id, admin_user.username)
+        logger.info("Pedido de cadastro %s aprovado por admin %s.", request_id, admin_user.username)
         
     return user
 
@@ -96,6 +101,6 @@ def reject_registration_request(request_id, admin_user):
         # Marcar todas as notificações associadas como lidas
         Notification.objects.filter(registration_request=req).update(is_read=True)
         
-        logger.info("Pedido de cadastro %d rejeitado por admin %s.", request_id, admin_user.username)
+        logger.info("Pedido de cadastro %s rejeitado por admin %s.", request_id, admin_user.username)
         
     return req

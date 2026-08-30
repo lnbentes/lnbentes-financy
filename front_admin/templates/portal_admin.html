@@ -1,0 +1,712 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title|default:"Portal Administrativo - LnB Financy" }}</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        earth: {
+                            50: '#f8fafc',
+                            100: '#f1f5f9',
+                            200: '#e2e8f0',
+                            300: '#cbd5e1',
+                            400: '#94a3b8',
+                            500: '#64748b',
+                            600: '#475569',
+                            700: '#334155',
+                            800: '#1e293b',
+                            850: '#172033',
+                            900: '#0f172a',
+                            950: '#090d16',
+                        },
+                        forest: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            200: '#bbf7d0',
+                            300: '#86efac',
+                            400: '#4ade80',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                            800: '#166534',
+                            900: '#14532d',
+                            950: '#052e16',
+                        },
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        serif: ['Outfit', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #64748b40; border-radius: 999px; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #64748b80; }
+    </style>
+</head>
+<body class="bg-earth-50 dark:bg-earth-950 text-earth-900 dark:text-earth-100 min-h-screen font-sans transition-colors duration-300">
+
+    <!-- ══════════════════════════════════════════════════════════
+         TELA DE LOGIN ADMINISTRATIVO
+         ────────────────────────────────────────────────────────── -->
+    <div id="login-screen" class="hidden min-h-screen flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-earth-900 border border-earth-200 dark:border-earth-800 rounded-3xl p-8 max-w-md w-full shadow-2xl space-y-6">
+            <div class="text-center space-y-2">
+                <div class="w-16 h-16 bg-forest-600 rounded-2xl flex items-center justify-center text-white text-3xl mx-auto shadow-lg shadow-forest-600/30">
+                    🛡️
+                </div>
+                <h1 class="text-2xl font-bold font-serif text-earth-900 dark:text-earth-50">Portal Administrativo</h1>
+                <p class="text-xs text-earth-500">Acesse com suas credenciais de administrador</p>
+            </div>
+
+            <div id="login-error" class="hidden p-3 rounded-xl bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-300 text-xs border border-red-200 dark:border-red-900/50"></div>
+
+            <form id="login-form" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-earth-700 dark:text-earth-300 mb-1">Usuário</label>
+                    <input type="text" id="login-username" required class="w-full px-4 py-2.5 rounded-xl border border-earth-200 dark:border-earth-700 bg-earth-50 dark:bg-earth-800 focus:ring-2 focus:ring-forest-500 outline-none text-sm" placeholder="Seu usuário de staff">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-earth-700 dark:text-earth-300 mb-1">Senha</label>
+                    <input type="password" id="login-password" required class="w-full px-4 py-2.5 rounded-xl border border-earth-200 dark:border-earth-700 bg-earth-50 dark:bg-earth-800 focus:ring-2 focus:ring-forest-500 outline-none text-sm" placeholder="••••••••">
+                </div>
+                <button type="submit" class="w-full py-3 bg-forest-600 hover:bg-forest-700 text-white font-bold text-sm rounded-xl transition-all shadow-lg shadow-forest-600/20 cursor-pointer">
+                    Entrar no Painel
+                </button>
+            </form>
+
+            <div class="text-center">
+                <a href="/" class="text-xs text-forest-600 dark:text-forest-400 hover:underline">← Voltar para o aplicativo</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════
+         LAYOUT PRINCIPAL DO PORTAL
+         ────────────────────────────────────────────────────────── -->
+    <div id="admin-layout" class="hidden min-h-screen flex flex-col md:flex-row">
+        
+        <!-- SIDEBAR -->
+        <aside class="w-full md:w-64 bg-white dark:bg-earth-900 border-r border-earth-200 dark:border-earth-800 flex flex-col shrink-0">
+            <!-- Brand -->
+            <div class="p-6 border-b border-earth-100 dark:border-earth-800 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-forest-600 text-white rounded-xl flex items-center justify-center text-xl shadow-md">
+                        🛡️
+                    </div>
+                    <div>
+                        <h2 class="font-serif font-bold text-base leading-tight">Admin Portal</h2>
+                        <span class="text-[10px] text-earth-400">LnB Financy</span>
+                    </div>
+                </div>
+                <button id="btn-theme-toggle" class="p-2 rounded-xl border border-earth-200 dark:border-earth-700 text-earth-500 hover:bg-earth-100 dark:hover:bg-earth-800 cursor-pointer transition-colors text-xs" title="Alternar tema">
+                    🌓
+                </button>
+            </div>
+
+            <!-- Navegação -->
+            <nav class="p-4 space-y-1.5 flex-1">
+                <button data-tab="dashboard" class="nav-tab-btn w-full flex items-center justify-between px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors cursor-pointer bg-forest-600 text-white active-tab">
+                    <div class="flex items-center gap-3">
+                        <span>📊</span>
+                        <span>Visão Geral</span>
+                    </div>
+                </button>
+
+                <button data-tab="family" class="nav-tab-btn w-full flex items-center justify-between px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors cursor-pointer text-earth-600 dark:text-earth-400 hover:bg-earth-100 dark:hover:bg-earth-800">
+                    <div class="flex items-center gap-3">
+                        <span>👨‍👩‍👧‍👦</span>
+                        <span>Finanças da Família</span>
+                    </div>
+                </button>
+
+                <button data-tab="requests" class="nav-tab-btn w-full flex items-center justify-between px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors cursor-pointer text-earth-600 dark:text-earth-400 hover:bg-earth-100 dark:hover:bg-earth-800">
+                    <div class="flex items-center gap-3">
+                        <span>📝</span>
+                        <span>Solicitações</span>
+                    </div>
+                    <span id="badge-requests" class="hidden px-2 py-0.5 text-[10px] font-bold bg-amber-500 text-white rounded-full">0</span>
+                </button>
+
+                <button data-tab="users" class="nav-tab-btn w-full flex items-center justify-between px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors cursor-pointer text-earth-600 dark:text-earth-400 hover:bg-earth-100 dark:hover:bg-earth-800">
+                    <div class="flex items-center gap-3">
+                        <span>👥</span>
+                        <span>Usuários</span>
+                    </div>
+                </button>
+
+                <button data-tab="database" class="nav-tab-btn w-full flex items-center justify-between px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors cursor-pointer text-earth-600 dark:text-earth-400 hover:bg-earth-100 dark:hover:bg-earth-800">
+                    <div class="flex items-center gap-3">
+                        <span>🗄️</span>
+                        <span>Banco & Sistema</span>
+                    </div>
+                </button>
+
+                <button data-tab="notifications" class="nav-tab-btn w-full flex items-center justify-between px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors cursor-pointer text-earth-600 dark:text-earth-400 hover:bg-earth-100 dark:hover:bg-earth-800">
+                    <div class="flex items-center gap-3">
+                        <span>🔔</span>
+                        <span>Notificações</span>
+                    </div>
+                    <span id="badge-notifications" class="hidden px-2 py-0.5 text-[10px] font-bold bg-forest-600 text-white rounded-full">0</span>
+                </button>
+            </nav>
+
+            <!-- User Info & Logout -->
+            <div class="p-4 border-t border-earth-100 dark:border-earth-800 flex items-center justify-between bg-earth-50/50 dark:bg-earth-950/40">
+                <div class="min-w-0">
+                    <div id="admin-user-name" class="font-bold text-xs truncate">Admin</div>
+                    <span id="admin-user-badge" class="text-[10px] text-forest-600 dark:text-forest-400 font-bold uppercase tracking-wider">Staff</span>
+                </div>
+                <div class="flex items-center gap-1">
+                    <a href="/" class="p-2 text-earth-500 hover:text-earth-700 dark:hover:text-earth-300 rounded-lg hover:bg-earth-200 dark:hover:bg-earth-800 text-xs" title="Ir para App">🏠</a>
+                    <button id="btn-logout" class="p-2 text-red-500 hover:text-red-700 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/50 cursor-pointer text-xs" title="Sair">🚪</button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- CONTEÚDO PRINCIPAL -->
+        <main class="flex-1 p-4 md:p-8 overflow-y-auto custom-scroll space-y-6">
+            
+            <!-- Header Top Bar -->
+            <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <h1 id="page-title" class="text-2xl sm:text-3xl font-serif font-bold text-earth-900 dark:text-earth-50">Painel de Controle</h1>
+                    <p class="text-xs sm:text-sm text-earth-500 mt-0.5">Gerenciamento central do ecossistema financeiro</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="AdminApp.refreshAllData()" class="px-3.5 py-2 bg-white dark:bg-earth-900 hover:bg-earth-100 dark:hover:bg-earth-800 border border-earth-200 dark:border-earth-700 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shadow-sm">
+                        🔄 Atualizar Dados
+                    </button>
+                </div>
+            </header>
+
+            <!-- ── SEÇÃO 1: DASHBOARD / VISÃO GERAL ── -->
+            <section id="section-dashboard" class="tab-content-section space-y-6">
+                <!-- KPI Cards Grid -->
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-white dark:bg-earth-900 border border-earth-200 dark:border-earth-800 rounded-2xl p-5 shadow-sm space-y-2">
+                        <span class="text-xs text-earth-400 font-semibold uppercase tracking-wider">Total de Usuários</span>
+                        <div id="stat-total-users" class="text-3xl font-bold text-earth-900 dark:text-earth-50">0</div>
+                        <div id="stat-active-users" class="text-xs text-forest-600 dark:text-forest-400 font-medium">0 ativos</div>
+                    </div>
+
+                    <div class="bg-white dark:bg-earth-900 border border-earth-200 dark:border-earth-800 rounded-2xl p-5 shadow-sm space-y-2">
+                        <span class="text-xs text-earth-400 font-semibold uppercase tracking-wider">Cadastros Pendentes</span>
+                        <div id="stat-pending-requests" class="text-3xl font-bold text-amber-500">0</div>
+                        <div class="text-xs text-earth-500">Aguardando aprovação</div>
+                    </div>
+
+                    <div class="bg-white dark:bg-earth-900 border border-earth-200 dark:border-earth-800 rounded-2xl p-5 shadow-sm space-y-2">
+                        <span class="text-xs text-earth-400 font-semibold uppercase tracking-wider">Total Transações</span>
+                        <div id="stat-transactions" class="text-3xl font-bold text-blue-500">0</div>
+                        <div class="text-xs text-earth-500">Registradas no sistema</div>
+                    </div>
+
+                    <div class="bg-white dark:bg-earth-900 border border-earth-200 dark:border-earth-800 rounded-2xl p-5 shadow-sm space-y-2">
+                        <span class="text-xs text-earth-400 font-semibold uppercase tracking-wider">Tamanho da Base (SQLite)</span>
+                        <div id="stat-db-size" class="text-3xl font-bold text-purple-500">0 MB</div>
+                        <div class="text-xs text-earth-500">Armazenamento local</div>
+                    </div>
+                </div>
+
+                <!-- Banner de Acesso Rápido ao Painel Financeiro Familiar -->
+                <div class="bg-gradient-to-r from-forest-900/40 via-forest-950/20 to-earth-900 border border-forest-500/30 rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm">
+                    <div class="flex items-center gap-3.5">
+                        <div class="w-12 h-12 rounded-2xl bg-forest-600/20 border border-forest-500/40 text-forest-400 flex items-center justify-center text-2xl shrink-0 shadow-xs">
+                            👨‍👩‍👧‍👦
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-sm text-earth-900 dark:text-earth-50 flex items-center gap-2">
+                                <span>Painel Financeiro Consolidado da Família</span>
+                                <span class="px-2 py-0.5 text-[10px] bg-forest-500/20 text-forest-600 dark:text-forest-400 font-bold rounded-full border border-forest-500/30">Métricas Ativas</span>
+                            </h3>
+                            <p class="text-xs text-earth-500 dark:text-earth-400 mt-0.5">
+                                Acompanhe o patrimônio conjunto, fluxo de caixa dos últimos 6 meses, divisão de despesas e desempenho por membro.
+                            </p>
+                        </div>
+                    </div>
+                    <button onclick="AdminApp.switchTab('family')" class="px-4 py-2.5 bg-forest-600 hover:bg-forest-700 text-white text-xs font-bold rounded-xl transition-all shadow-md shadow-forest-600/20 cursor-pointer shrink-0 flex items-center gap-1.5">
+                        <span>Ver Métricas Familiares</span>
+                        <span>→</span>
+                    </button>
+                </div>
+
+                <!-- Pedidos Recentes & Ações Rápidas -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Pedidos Pendentes -->
+                    <div class="lg:col-span-2 bg-white dark:bg-earth-900 border border-earth-200 dark:border-earth-800 rounded-2xl shadow-sm overflow-hidden flex flex-col">
+                        <div class="p-5 border-b border-earth-100 dark:border-earth-800 flex justify-between items-center">
+                            <h3 class="font-bold text-sm text-earth-900 dark:text-earth-100 flex items-center gap-2">
+                                <span>📝</span> Solicitações de Cadastro Pendentes
+                            </h3>
+                            <button onclick="AdminApp.switchTab('requests')" class="text-xs text-forest-600 dark:text-forest-400 font-semibold hover:underline cursor-pointer">
+                                Ver todas →
+                            </button>
+                        </div>
+                        <div id="dashboard-pending-list" class="flex-1 divide-y divide-earth-100 dark:divide-earth-800">
+                            <!-- Renderizado via JS -->
+                        </div>
+                    </div>
+
+                    <!-- Ações Rápidas -->
+                    <div class="bg-white dark:bg-earth-900 border border-earth-200 dark:border-earth-800 rounded-2xl p-5 shadow-sm space-y-4">
+                        <h3 class="font-bold text-sm text-earth-900 dark:text-earth-100 flex items-center gap-2">
+                            <span>⚡</span> Ações Administrativas
+                        </h3>
+                        <div class="space-y-2">
+                            <button onclick="AdminApp.openNewUserModal()" class="w-full py-2.5 px-4 bg-forest-600 hover:bg-forest-700 text-white rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-2 cursor-pointer">
+                                ➕ Criar Novo Usuário
+                            </button>
+                            <button onclick="AdminApp.runDatabaseMaintenance()" class="w-full py-2.5 px-4 bg-earth-100 dark:bg-earth-800 hover:bg-earth-200 dark:hover:bg-earth-700 text-earth-800 dark:text-earth-200 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-2 cursor-pointer">
+                                🗄️ Otimizar Banco (VACUUM)
+                            </button>
+                            <button onclick="AdminApp.downloadDatabaseBackup()" class="w-full py-2.5 px-4 bg-earth-100 dark:bg-earth-800 hover:bg-earth-200 dark:hover:bg-earth-700 text-earth-800 dark:text-earth-200 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-2 cursor-pointer">
+                                💾 Baixar Backup Geral (JSON)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ── SEÇÃO 2: FINANÇAS DA FAMÍLIA (DASHBOARD ANALÍTICO) ── -->
+            <section id="section-family" class="tab-content-section hidden space-y-6">
+                <!-- Barra de Filtro de Período -->
+                <div class="bg-white dark:bg-earth-900 border border-earth-200 dark:border-earth-800 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4 shadow-sm">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-forest-100 dark:bg-forest-900/40 text-forest-600 dark:text-forest-400 flex items-center justify-center text-xl shadow-xs">
+                            👨‍👩‍👧‍👦
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-sm text-earth-900 dark:text-earth-100 leading-tight">Painel Consolidado da Família</h3>
+                            <p class="text-[11px] text-earth-500">Visão integrada das finanças de todos os membros</p>
+                        </div>
+                    </div>
+
+                    <!-- Controles de Mês e Ano -->
+                    <div class="flex items-center gap-2">
+                        <select id="family-month-select" class="px-3 py-2 rounded-xl border border-earth-200 dark:border-earth-700 bg-earth-50 dark:bg-earth-800 text-xs font-bold outline-none cursor-pointer">
+                            <option value="1">Janeiro</option>
+                            <option value="2">Fevereiro</option>
+                            <option value="3">Março</option>
+                            <option value="4">Abril</option>
+                            <option value="5">Maio</option>
+                            <option value="6">Junho</option>
+                            <option value="7">Julho</option>
+                            <option value="8" selected>Agosto</option>
+                            <option value="9">Setembro</option>
+                            <option value="10">Outubro</option>
+                            <option value="11">Novembro</option>
+                            <option value="12">Dezembro</option>
+                        </select>
+                        <select id="family-year-select" class="px-3 py-2 rounded-xl border border-earth-200 dark:border-earth-700 bg-earth-50 dark:bg-earth-800 text-xs font-bold outline-none cursor-pointer">
+                            <option value="2025">2025</option>
+                            <option value="2026" selected>2026</option>
+                            <option value="2027">2027</option>
+                        </select>
+                        <button onclick="AdminApp.loadFamilyFinance()" class="px-4 py-2 bg-forest-600 hover:bg-forest-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center gap-1.5">
+                            <span>🔍</span> Atualizar
+                        </button>
+                    </div>
+                </div>
+
+                <!-- KPIs Familiares (Grid de 5 Cards) -->
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                    <!-- Patrimônio Familiar -->
+                    <div class="bg-white dark:bg-earth-900 border border-earth-200 dark:border-earth-800 rounded-2xl p-4 shadow-sm space-y-1">
+                        <span class="text-[11px] font-bold text-earth-400 uppercase tracking-wider block">Patrimônio Consolidado</span>
+                        <div id="fam-kpi-networth" class="text-2xl font-black text-forest-600 dark:text-forest-400">R$ 0,00</div>
+                        <div id="fam-kpi-accounts" class="text-[11px] text-earth-500 font-medium">0 contas ativas</div>
+                    </div>
+
+                    <!-- Receitas da Família -->
+                    <div class="bg-white dark:bg-earth-900 border border-earth-200 dark:border-earth-800 rounded-2xl p-4 shadow-sm space-y-1">
+                        <span class="text-[11px] font-bold text-earth-400 uppercase tracking-wider block">Receitas do Mês</span>
+                        <div id="fam-kpi-income" class="text-2xl font-black text-green-500">R$ 0,00</div>
+                        <div class="text-[11px] text-earth-500 font-medium">Total de entradas</div>
+                    </div>
+
+                    <!-- Despesas da Família -->
+                    <div class="bg-white dark:bg-earth-900 border border-earth-200 dark:border-earth-800 rounded-2xl p-4 shadow-sm space-y-1">
+                        <span class="text-[11px] font-bold text-earth-400 uppercase tracking-wider block">Despesas do Mês</span>
+                        <div id="fam-kpi-expense" class="text-2xl font-black text-red-500">R$ 0,00</div>
+                        <div class="text-[11px] text-earth-500 font-medium">Total de saídas</div>
+                    </div>
+
+                    <!-- Saldo Líquido / Economia -->
+                    <div class="bg-white dark:bg-earth-900 border border-earth-200 dark:border-earth-800 rounded-2xl p-4 shadow-sm space-y-1">
+                        <span class="text-[11px] font-bold text-earth-400 uppercase tracking-wider block">Economia do Mês</span>
+                        <div id="fam-kpi-savings" class="text-2xl font-black text-blue-500">R$ 0,00</div>
+                        <div id="fam-kpi-savings-rate" class="text-[11px] text-blue-600 dark:text-blue-400 font-bold">0% poupado</div>
+                    </div>
+
+                    <!-- Parcelas Futuras -->
+                    <div class="bg-white dark:bg-earth-900 border border-earth-200 dark:border-earth-800 rounded-2xl p-4 shadow-sm space-y-1 col-span-2 md:col-span-1">
+                        <span class="text-[11px] font-bold text-earth-400 uppercase tracking-wider block">Parcelas Futuras</span>
+                        <div id="fam-kpi-installments" class="text-2xl font-black text-amber-500">R$ 0,00</div>
+                        <div id="fam-kpi-installments-count" class="text-[11px] text-earth-500 font-medium">0 parcelas a vencer</div>
+                    </div>
+                </div>
+
+                <!-- Gráficos Principais (Grid 2 Colunas) -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Gráfico 1: Evolução Histórica (6 Meses) -->
+                    <div class="bg-white dark:bg-earth-900 border border-earth-200 dark:border-earth-800 rounded-2xl p-5 shadow-sm space-y-4">
+                        <div class="flex items-center justify-between">
+                            <h4 class="font-bold text-sm text-earth-900 dark:text-earth-100 flex items-center gap-2">
+                                <span>📈</span> Evolução do Fluxo de Caixa (6 Meses)
+                            </h4>
+                            <span class="text-[10px] bg-earth-100 dark:bg-earth-800 px-2 py-0.5 rounded-lg text-earth-500 font-bold">Consolidado</span>
+                        </div>
+                        <div class="h-64 relative">
+                            <canvas id="chart-family-history"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Gráfico 2: Despesas por Categoria -->
+                    <div class="bg-white dark:bg-earth-900 border border-earth-200 dark:border-earth-800 rounded-2xl p-5 shadow-sm space-y-4">
+                        <div class="flex items-center justify-between">
+                            <h4 class="font-bold text-sm text-earth-900 dark:text-earth-100 flex items-center gap-2">
+                                <span>🍩</span> Despesas por Categoria Familiar
+                            </h4>
+                            <span class="text-[10px] bg-earth-100 dark:bg-earth-800 px-2 py-0.5 rounded-lg text-earth-500 font-bold">Mês Selecionado</span>
+                        </div>
+                        <div class="h-64 relative flex items-center justify-center">
+                            <canvas id="chart-family-categories"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Comparativo e Tabela de Membros da Família -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Gráfico de Participação de Gastos -->
+                    <div class="bg-white dark:bg-earth-900 border border-earth-200 dark:border-earth-800 rounded-2xl p-5 shadow-sm space-y-4">
+                        <h4 class="font-bold text-sm text-earth-900 dark:text-earth-100 flex items-center gap-2">
+                            <span>📊</span> Participação nos Gastos da Casa
+                        </h4>
+                        <div class="h-56 relative">
+                            <canvas id="chart-family-members"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Tabela Analítica de Membros -->
+                    <div class="lg:col-span-2 bg-white dark:bg-earth-900 border border-earth-200 dark:border-earth-800 rounded-2xl shadow-sm overflow-hidden flex flex-col">
+                        <div class="p-5 border-b border-earth-100 dark:border-earth-800 flex justify-between items-center">
+                            <h4 class="font-bold text-sm text-earth-900 dark:text-earth-100 flex items-center gap-2">
+                                <span>👥</span> Desempenho Financeiro por Membro
+                            </h4>
+                            <span class="text-xs text-earth-400 font-medium">No mês selecionado</span>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="border-b border-earth-100 dark:border-earth-800 text-[11px] uppercase tracking-wider text-earth-400 bg-earth-50/50 dark:bg-earth-950/40">
+                                        <th class="p-4">Membro</th>
+                                        <th class="p-4">Saldo em Contas</th>
+                                        <th class="p-4">Receitas Mês</th>
+                                        <th class="p-4">Despesas Mês</th>
+                                        <th class="p-4">Saldo Mês</th>
+                                        <th class="p-4 text-right">% dos Gastos</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="family-members-table-body" class="divide-y divide-earth-100 dark:divide-earth-800">
+                                    <!-- Renderizado via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ── SEÇÃO 3: SOLICITAÇÕES DE CADASTRO ── -->
+            <section id="section-requests" class="tab-content-section hidden space-y-4">
+                <div class="bg-white dark:bg-earth-900 border border-earth-200 dark:border-earth-800 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3 shadow-sm">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-bold text-earth-500">Filtrar por Status:</span>
+                        <select id="requests-filter-select" class="px-3 py-1.5 rounded-xl border border-earth-200 dark:border-earth-700 bg-earth-50 dark:bg-earth-800 text-xs font-semibold outline-none cursor-pointer">
+                            <option value="ALL">Todas as Solicitações</option>
+                            <option value="PENDING" selected>Pendentes</option>
+                            <option value="APPROVED">Aprovadas</option>
+                            <option value="REJECTED">Rejeitadas</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="bg-white dark:bg-earth-900 border border-earth-200 dark:border-earth-800 rounded-2xl shadow-sm overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-earth-100 dark:border-earth-800 text-[11px] uppercase tracking-wider text-earth-400 bg-earth-50/50 dark:bg-earth-950/40">
+                                <th class="p-4">ID</th>
+                                <th class="p-4">Nome Completo</th>
+                                <th class="p-4">Usuário</th>
+                                <th class="p-4">E-mail</th>
+                                <th class="p-4">Status</th>
+                                <th class="p-4 text-right">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="requests-table-body" class="divide-y divide-earth-100 dark:divide-earth-800">
+                            <!-- Renderizado via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- ── SEÇÃO 3: GESTÃO DE USUÁRIOS ── -->
+            <section id="section-users" class="tab-content-section hidden space-y-4">
+                <div class="bg-white dark:bg-earth-900 border border-earth-200 dark:border-earth-800 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3 shadow-sm">
+                    <div class="flex-1 min-w-[200px] max-w-md">
+                        <input type="text" id="users-search-input" placeholder="Buscar por nome, usuário ou e-mail..." class="w-full px-4 py-2 rounded-xl border border-earth-200 dark:border-earth-700 bg-earth-50 dark:bg-earth-800 text-xs outline-none focus:ring-2 focus:ring-forest-500">
+                    </div>
+                    <button onclick="AdminApp.openNewUserModal()" class="px-4 py-2 bg-forest-600 hover:bg-forest-700 text-white rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer shadow-sm">
+                        ➕ Novo Usuário
+                    </button>
+                </div>
+
+                <div class="bg-white dark:bg-earth-900 border border-earth-200 dark:border-earth-800 rounded-2xl shadow-sm overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-earth-100 dark:border-earth-800 text-[11px] uppercase tracking-wider text-earth-400 bg-earth-50/50 dark:bg-earth-950/40">
+                                <th class="p-4">Nome / Usuário</th>
+                                <th class="p-4">E-mail</th>
+                                <th class="p-4">Status</th>
+                                <th class="p-4">Permissão</th>
+                                <th class="p-4">Data de Cadastro</th>
+                                <th class="p-4 text-right">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-table-body" class="divide-y divide-earth-100 dark:divide-earth-800">
+                            <!-- Renderizado via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- ── SEÇÃO 4: BANCO DE DADOS & SISTEMA ── -->
+            <section id="section-database" class="tab-content-section hidden space-y-6">
+                <!-- Informações Técnicas -->
+                <div class="bg-white dark:bg-earth-900 border border-earth-200 dark:border-earth-800 rounded-2xl p-6 shadow-sm space-y-4">
+                    <h3 class="font-bold text-base text-earth-900 dark:text-earth-100 flex items-center gap-2">
+                        <span>🗄️</span> Detalhes do Banco de Dados
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                        <div class="p-4 rounded-xl bg-earth-50 dark:bg-earth-800/40 border border-earth-200 dark:border-earth-800">
+                            <span class="text-xs text-earth-400 block mb-1">Engine</span>
+                            <strong id="db-engine-val" class="text-base text-forest-600 dark:text-forest-400">-</strong>
+                        </div>
+                        <div class="p-4 rounded-xl bg-earth-50 dark:bg-earth-800/40 border border-earth-200 dark:border-earth-800">
+                            <span class="text-xs text-earth-400 block mb-1">Tamanho do Arquivo</span>
+                            <strong id="db-size-val" class="text-base text-purple-600 dark:text-purple-400">-</strong>
+                        </div>
+                        <div class="p-4 rounded-xl bg-earth-50 dark:bg-earth-800/40 border border-earth-200 dark:border-earth-800 md:col-span-1">
+                            <span class="text-xs text-earth-400 block mb-1">Status da Conexão</span>
+                            <strong class="text-base text-green-600 dark:text-green-400">● Conectado e Ativo</strong>
+                        </div>
+                    </div>
+                    <div class="p-3 bg-earth-50 dark:bg-earth-800/20 rounded-xl text-xs font-mono text-earth-500 break-all">
+                        <strong>Caminho:</strong> <span id="db-path-val">-</span>
+                    </div>
+                </div>
+
+                <!-- Contadores por Tabela -->
+                <div class="bg-white dark:bg-earth-900 border border-earth-200 dark:border-earth-800 rounded-2xl p-6 shadow-sm space-y-4">
+                    <h3 class="font-bold text-base text-earth-900 dark:text-earth-100 flex items-center gap-2">
+                        <span>📊</span> Registros por Entidade
+                    </h3>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3 text-center">
+                        <div class="p-3 rounded-xl bg-earth-50 dark:bg-earth-800/40 border border-earth-200 dark:border-earth-800">
+                            <span class="text-xs text-earth-400 block">Usuários</span>
+                            <strong id="db-count-users" class="text-xl font-bold">0</strong>
+                        </div>
+                        <div class="p-3 rounded-xl bg-earth-50 dark:bg-earth-800/40 border border-earth-200 dark:border-earth-800">
+                            <span class="text-xs text-earth-400 block">Contas</span>
+                            <strong id="db-count-accounts" class="text-xl font-bold">0</strong>
+                        </div>
+                        <div class="p-3 rounded-xl bg-earth-50 dark:bg-earth-800/40 border border-earth-200 dark:border-earth-800">
+                            <span class="text-xs text-earth-400 block">Categorias</span>
+                            <strong id="db-count-categories" class="text-xl font-bold">0</strong>
+                        </div>
+                        <div class="p-3 rounded-xl bg-earth-50 dark:bg-earth-800/40 border border-earth-200 dark:border-earth-800">
+                            <span class="text-xs text-earth-400 block">Transações</span>
+                            <strong id="db-count-transactions" class="text-xl font-bold text-blue-500">0</strong>
+                        </div>
+                        <div class="p-3 rounded-xl bg-earth-50 dark:bg-earth-800/40 border border-earth-200 dark:border-earth-800">
+                            <span class="text-xs text-earth-400 block">Solicitações</span>
+                            <strong id="db-count-requests" class="text-xl font-bold text-amber-500">0</strong>
+                        </div>
+                        <div class="p-3 rounded-xl bg-earth-50 dark:bg-earth-800/40 border border-earth-200 dark:border-earth-800">
+                            <span class="text-xs text-earth-400 block">Notificações</span>
+                            <strong id="db-count-notifications" class="text-xl font-bold">0</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Manutenção & Backup -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-white dark:bg-earth-900 border border-earth-200 dark:border-earth-800 rounded-2xl p-6 shadow-sm space-y-3">
+                        <h4 class="font-bold text-sm text-earth-900 dark:text-earth-100 flex items-center gap-2">
+                            <span>🧹</span> Otimização da Base SQLite
+                        </h4>
+                        <p class="text-xs text-earth-500 leading-relaxed">
+                            Executa o comando <code class="bg-earth-100 dark:bg-earth-800 px-1 py-0.5 rounded">VACUUM</code> para reorganizar e compactar o arquivo físico do banco e roda uma verificação de integridade estrutural.
+                        </p>
+                        <button id="btn-db-maintenance" onclick="AdminApp.runDatabaseMaintenance()" class="w-full py-2.5 bg-forest-600 hover:bg-forest-700 text-white rounded-xl text-xs font-bold transition-colors cursor-pointer">
+                            ⚡ Executar Otimização (VACUUM)
+                        </button>
+                    </div>
+
+                    <div class="bg-white dark:bg-earth-900 border border-earth-200 dark:border-earth-800 rounded-2xl p-6 shadow-sm space-y-3">
+                        <h4 class="font-bold text-sm text-earth-900 dark:text-earth-100 flex items-center gap-2">
+                            <span>💾</span> Backup Geral Consolidado
+                        </h4>
+                        <p class="text-xs text-earth-500 leading-relaxed">
+                            Exporta todas as tabelas de usuários, contas, categorias, transações e histórico em formato JSON estruturado com carimbo de data/hora para segurança.
+                        </p>
+                        <button onclick="AdminApp.downloadDatabaseBackup()" class="w-full py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold transition-colors cursor-pointer">
+                            📥 Baixar Backup do Sistema (JSON)
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ── SEÇÃO 5: NOTIFICAÇÕES ── -->
+            <section id="section-notifications" class="tab-content-section hidden space-y-4">
+                <div class="bg-white dark:bg-earth-900 border border-earth-200 dark:border-earth-800 rounded-2xl p-4 flex justify-between items-center shadow-sm">
+                    <h3 class="font-bold text-sm">Histórico de Alertas</h3>
+                    <button onclick="AdminApp.markAllNotificationsRead()" class="px-3 py-1.5 bg-earth-100 dark:bg-earth-800 hover:bg-earth-200 dark:hover:bg-earth-700 text-xs font-bold rounded-xl transition-colors cursor-pointer">
+                        ✓ Marcar todas como lidas
+                    </button>
+                </div>
+
+                <div id="notifications-full-list" class="space-y-3">
+                    <!-- Renderizado via JS -->
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════
+         MODAIS
+         ────────────────────────────────────────────────────────── -->
+
+    <!-- Modal Novo Usuário -->
+    <div id="user-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+        <div class="bg-white dark:bg-earth-900 border border-earth-200 dark:border-earth-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-200">
+            <div class="flex justify-between items-center border-b border-earth-100 dark:border-earth-800 pb-3">
+                <h3 class="font-bold text-base">Novo Usuário</h3>
+                <button onclick="AdminApp.closeUserModal()" class="text-earth-400 hover:text-earth-600 text-lg cursor-pointer">✕</button>
+            </div>
+            <form id="user-modal-form" class="space-y-3">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-earth-600 dark:text-earth-400 mb-1">Nome *</label>
+                        <input type="text" id="new-user-firstname" required class="w-full px-3 py-2 rounded-xl border border-earth-200 dark:border-earth-700 bg-earth-50 dark:bg-earth-800 text-xs outline-none focus:ring-2 focus:ring-forest-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-earth-600 dark:text-earth-400 mb-1">Sobrenome</label>
+                        <input type="text" id="new-user-lastname" class="w-full px-3 py-2 rounded-xl border border-earth-200 dark:border-earth-700 bg-earth-50 dark:bg-earth-800 text-xs outline-none focus:ring-2 focus:ring-forest-500">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-earth-600 dark:text-earth-400 mb-1">Usuário *</label>
+                    <input type="text" id="new-user-username" required class="w-full px-3 py-2 rounded-xl border border-earth-200 dark:border-earth-700 bg-earth-50 dark:bg-earth-800 text-xs outline-none focus:ring-2 focus:ring-forest-500" placeholder="ex: joao.silva">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-earth-600 dark:text-earth-400 mb-1">E-mail *</label>
+                    <input type="email" id="new-user-email" required class="w-full px-3 py-2 rounded-xl border border-earth-200 dark:border-earth-700 bg-earth-50 dark:bg-earth-800 text-xs outline-none focus:ring-2 focus:ring-forest-500" placeholder="joao@email.com">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-earth-600 dark:text-earth-400 mb-1">Senha Inicial *</label>
+                    <input type="password" id="new-user-password" required minlength="8" class="w-full px-3 py-2 rounded-xl border border-earth-200 dark:border-earth-700 bg-earth-50 dark:bg-earth-800 text-xs outline-none focus:ring-2 focus:ring-forest-500" placeholder="Mínimo 8 caracteres">
+                </div>
+
+                <div class="pt-2">
+                    <label class="flex items-center gap-2 cursor-pointer select-none">
+                        <input type="checkbox" id="new-user-is-staff" class="w-4 h-4 rounded accent-forest-600">
+                        <span class="text-xs font-semibold text-earth-700 dark:text-earth-300">Conceder acesso de Administrador (Staff)</span>
+                    </label>
+                </div>
+
+                <div class="flex gap-2 pt-4">
+                    <button type="button" onclick="AdminApp.closeUserModal()" class="flex-1 py-2.5 bg-earth-100 dark:bg-earth-800 hover:bg-earth-200 dark:hover:bg-earth-700 rounded-xl text-xs font-bold transition-colors cursor-pointer">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="flex-1 py-2.5 bg-forest-600 hover:bg-forest-700 text-white rounded-xl text-xs font-bold transition-colors cursor-pointer">
+                        Criar Usuário
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Redefinir Senha -->
+    <div id="reset-password-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+        <div class="bg-white dark:bg-earth-900 border border-earth-200 dark:border-earth-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-200">
+            <div class="flex justify-between items-center border-b border-earth-100 dark:border-earth-800 pb-3">
+                <h3 class="font-bold text-base">Redefinir Senha</h3>
+                <button onclick="AdminApp.closeResetPasswordModal()" class="text-earth-400 hover:text-earth-600 text-lg cursor-pointer">✕</button>
+            </div>
+            <form id="reset-password-form" class="space-y-3">
+                <input type="hidden" id="reset-pass-user-id">
+                <p class="text-xs text-earth-500">Defina uma nova senha para o usuário <strong id="reset-pass-user-label" class="text-forest-600 dark:text-forest-400">-</strong>:</p>
+                <div>
+                    <label class="block text-xs font-semibold text-earth-600 dark:text-earth-400 mb-1">Nova Senha *</label>
+                    <input type="password" id="reset-pass-input" required minlength="8" class="w-full px-3 py-2 rounded-xl border border-earth-200 dark:border-earth-700 bg-earth-50 dark:bg-earth-800 text-xs outline-none focus:ring-2 focus:ring-forest-500" placeholder="Mínimo 8 caracteres">
+                </div>
+                <div class="flex gap-2 pt-3">
+                    <button type="button" onclick="AdminApp.closeResetPasswordModal()" class="flex-1 py-2.5 bg-earth-100 dark:bg-earth-800 hover:bg-earth-200 dark:hover:bg-earth-700 rounded-xl text-xs font-bold transition-colors cursor-pointer">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="flex-1 py-2.5 bg-forest-600 hover:bg-forest-700 text-white rounded-xl text-xs font-bold transition-colors cursor-pointer">
+                        Salvar Nova Senha
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Confirmação -->
+    <div id="confirm-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+        <div class="bg-white dark:bg-earth-900 border border-earth-200 dark:border-earth-800 rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-200 text-center">
+            <h3 id="confirm-modal-title" class="font-bold text-base text-earth-900 dark:text-earth-100">Confirmação</h3>
+            <p id="confirm-modal-message" class="text-xs text-earth-500 leading-relaxed"></p>
+            <div class="flex gap-2 pt-2">
+                <button type="button" onclick="AdminApp.closeConfirmModal()" class="flex-1 py-2.5 bg-earth-100 dark:bg-earth-800 hover:bg-earth-200 dark:hover:bg-earth-700 rounded-xl text-xs font-bold transition-colors cursor-pointer">
+                    Cancelar
+                </button>
+                <button type="button" id="confirm-modal-btn" onclick="AdminApp.executeConfirmModal()" class="flex-1 py-2.5 bg-forest-600 hover:bg-forest-700 text-white rounded-xl text-xs font-bold transition-colors cursor-pointer">
+                    Confirmar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Container de Toasts Flutuantes -->
+    <div id="toast-container" class="fixed bottom-6 right-6 z-50 flex flex-col gap-2 max-w-sm pointer-events-none"></div>
+
+    <!-- Scripts -->
+    <script src="{% static 'js/admin_api.js' %}"></script>
+    <script src="{% static 'js/admin_app.js' %}"></script>
+</body>
+</html>

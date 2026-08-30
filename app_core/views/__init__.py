@@ -5,6 +5,9 @@ from .account import AccountViewSet
 from .transaction import TransactionViewSet
 from .registration import RegistrationRequestViewSet
 from .notification import NotificationViewSet
+from .budget import BudgetViewSet
+from .recurring import RecurringTransactionViewSet
+from .peer_transfer import PeerTransferViewSet
 
 __all__ = [
     'UserViewSet',
@@ -14,5 +17,8 @@ __all__ = [
     'AccountViewSet',
     'TransactionViewSet',
     'RegistrationRequestViewSet',
-    'NotificationViewSet'
+    'NotificationViewSet',
+    'BudgetViewSet',
+    'RecurringTransactionViewSet',
+    'PeerTransferViewSet',
 ]

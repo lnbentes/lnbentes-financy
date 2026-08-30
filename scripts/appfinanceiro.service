@@ -1,0 +1,24 @@
+[Unit]
+Description=Servico Backend AppFinanceiro (Django + Gunicorn)
+After=network.target
+
+[Service]
+User=lnb
+Group=lnb
+WorkingDirectory=/home/lnb/AppFinanceiro
+Environment="PATH=/home/lnb/AppFinanceiro/venv/bin:/usr/local/bin:/usr/bin"
+ExecStart=/home/lnb/AppFinanceiro/venv/bin/gunicorn config.wsgi:application \
+    --name app_financeiro \
+    --workers 2 \
+    --threads 2 \
+    --worker-class gthread \
+    --worker-tmp-dir /dev/shm \
+    --bind 127.0.0.1:8000 \
+    --timeout 60 \
+    --log-level info
+
+Restart=always
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target

@@ -34,6 +34,7 @@ logger = logging.getLogger(__name__)
 class RegistrationRequestViewSet(viewsets.ModelViewSet):
     queryset = RegistrationRequest.objects.all()
     serializer_class = RegistrationRequestSerializer
+    throttle_scope = 'registration'
 
     def get_permissions(self):
         if self.action == 'create':

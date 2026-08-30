@@ -1,10 +1,26 @@
 import { useState, useEffect, useRef } from 'react';
-import { Menu, Moon, Sun, Bell, Check, UserPlus, Info, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
+import { 
+  Menu, 
+  Moon, 
+  Sun, 
+  Bell, 
+  Check, 
+  UserPlus, 
+  Info, 
+  CheckCircle2, 
+  XCircle, 
+  Loader2, 
+  ArrowRightLeft,
+  Wallet
+} from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { notificationService } from '../../services/notificationService';
 import type { NotificationData } from '../../services/notificationService';
 import { registrationService } from '../../services/registrationService';
+import { peerTransferService } from '../../services/peerTransferService';
+import { accountsService } from '../../services/finance/accounts';
+import type { Account } from '../../types/finance';
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -17,8 +33,12 @@ export function Header({ onMenuClick, title }: HeaderProps) {
   
   const [notifications, setNotifications] = useState<NotificationData[]>([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [actionLoadingId, setActionLoadingId] = useState<number | null>(null);
+  const [actionLoadingId, setActionLoadingId] = useState<string | number | null>(null);
   
+  // Contas do usuário para escolha no recebimento de transferência
+  const [userAccounts, setUserAccounts] = useState<Account[]>([]);
+  const [selectedAccounts, setSelectedAccounts] = useState<Record<string, string>>({});
+
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const unreadCount = notifications.filter(n => !n.is_read).length;
@@ -33,14 +53,34 @@ export function Header({ onMenuClick, title }: HeaderProps) {
     }
   };
 
-  // Buscar notificações na montagem e configurar polling a cada 60s
+  const fetchAccounts = async () => {
+    if (!user) return;
+    try {
+      const accs = await accountsService.list();
+      setUserAccounts(accs);
+      if (accs.length > 0) {
+        setSelectedAccounts(prev => {
+          const updated = { ...prev };
+          notifications.forEach(n => {
+            if (n.peer_transfer && !updated[n.peer_transfer]) {
+              updated[n.peer_transfer] = accs[0].id;
+            }
+          });
+          return updated;
+        });
+      }
+    } catch (err) {
+      console.error('Erro ao buscar contas:', err);
+    }
+  };
+
   useEffect(() => {
     fetchNotifications();
-    const interval = setInterval(fetchNotifications, 60000);
+    fetchAccounts();
+    const interval = setInterval(fetchNotifications, 45000);
     return () => clearInterval(interval);
   }, [user]);
 
-  // Fechar dropdown ao clicar fora
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -72,6 +112,45 @@ export function Header({ onMenuClick, title }: HeaderProps) {
     } catch (err: any) {
       console.error(err);
       alert(err.message || 'Erro ao rejeitar cadastro.');
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
+
+  const handleAcceptTransfer = async (transferId: string) => {
+    const accId = selectedAccounts[transferId] || (userAccounts.length > 0 ? userAccounts[0].id : '');
+    if (!accId) {
+      alert('Por favor, selecione uma conta de destino para receber a transferência.');
+      return;
+    }
+
+    setActionLoadingId(transferId);
+    try {
+      await peerTransferService.accept(transferId, accId);
+      await fetchNotifications();
+      // Recarrega a página ou avisa para atualizar saldo
+      window.dispatchEvent(new Event('finance-updated'));
+    } catch (err: any) {
+      console.error(err);
+      alert(err.message || 'Erro ao aceitar transferência.');
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
+
+  const handleRejectTransfer = async (transferId: string) => {
+    if (!window.confirm('Tem certeza de que deseja recusar esta transferência? O valor será estornado ao remetente.')) {
+      return;
+    }
+
+    setActionLoadingId(transferId);
+    try {
+      await peerTransferService.reject(transferId);
+      await fetchNotifications();
+      window.dispatchEvent(new Event('finance-updated'));
+    } catch (err: any) {
+      console.error(err);
+      alert(err.message || 'Erro ao recusar transferência.');
     } finally {
       setActionLoadingId(null);
     }
@@ -124,7 +203,13 @@ export function Header({ onMenuClick, title }: HeaderProps) {
         {/* Dropdown de Notificações */}
         <div className="relative" ref={dropdownRef}>
           <button 
-            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+            onClick={() => {
+              setIsDropdownOpen(!isDropdownOpen);
+              if (!isDropdownOpen) {
+                fetchNotifications();
+                fetchAccounts();
+              }
+            }}
             className="p-2 relative rounded-full text-forest-600 dark:text-forest-300 hover:bg-forest-100 dark:hover:bg-forest-900 transition-colors cursor-pointer"
           >
             <Bell size={20} />
@@ -136,7 +221,7 @@ export function Header({ onMenuClick, title }: HeaderProps) {
           </button>
 
           {isDropdownOpen && (
-            <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white dark:bg-earth-900 border border-earth-200 dark:border-earth-800 rounded-2xl shadow-2xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-5 duration-200">
+            <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white dark:bg-earth-900 border border-earth-200 dark:border-earth-800 rounded-3xl shadow-2xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-5 duration-200">
               <div className="flex items-center justify-between p-4 border-b border-earth-100 dark:border-earth-800 bg-earth-50/50 dark:bg-earth-950/20">
                 <span className="font-bold text-sm text-earth-800 dark:text-earth-100">Notificações</span>
                 {unreadCount > 0 && (
@@ -149,7 +234,7 @@ export function Header({ onMenuClick, title }: HeaderProps) {
                 )}
               </div>
 
-              <div className="max-h-80 overflow-y-auto divide-y divide-earth-100 dark:divide-earth-800 scrollbar-thin">
+              <div className="max-h-96 overflow-y-auto divide-y divide-earth-100 dark:divide-earth-800 scrollbar-thin">
                 {notifications.length === 0 ? (
                   <div className="p-8 text-center text-earth-400 dark:text-earth-500">
                     <Bell size={32} className="mx-auto mb-2 opacity-40 text-earth-300 dark:text-earth-600" />
@@ -160,16 +245,27 @@ export function Header({ onMenuClick, title }: HeaderProps) {
                   notifications.map((notification) => {
                     const isRegRequest = notification.registration_request !== null;
                     const regDetail = notification.registration_request_detail;
-                    const isPending = regDetail?.status === 'PENDING';
+                    const isRegPending = regDetail?.status === 'PENDING';
+
+                    const isPeerTransfer = notification.peer_transfer !== null;
+                    const peerDetail = notification.peer_transfer_detail;
+                    const isPeerPending = peerDetail?.status === 'PENDING';
+                    const isReceiver = peerDetail?.receiver === user?.id;
 
                     return (
                       <div 
                         key={notification.id} 
-                        className={`p-4 transition-colors ${notification.is_read ? 'bg-white dark:bg-earth-900 opacity-75' : 'bg-forest-50/20 dark:bg-forest-950/5'}`}
+                        className={`p-4 transition-colors ${notification.is_read ? 'bg-white dark:bg-earth-900 opacity-80' : 'bg-forest-50/30 dark:bg-forest-950/10'}`}
                       >
                         <div className="flex gap-3">
-                          <div className={`w-8 h-8 rounded-full shrink-0 flex items-center justify-center ${isRegRequest ? 'bg-forest-100 dark:bg-forest-900/30 text-forest-700 dark:text-forest-400' : 'bg-earth-100 dark:bg-earth-800 text-earth-600 dark:text-earth-400'}`}>
-                            {isRegRequest ? <UserPlus size={16} /> : <Info size={16} />}
+                          <div className={`w-8 h-8 rounded-full shrink-0 flex items-center justify-center ${
+                            isPeerTransfer 
+                              ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' 
+                              : isRegRequest 
+                              ? 'bg-forest-100 dark:bg-forest-900/30 text-forest-700 dark:text-forest-400' 
+                              : 'bg-earth-100 dark:bg-earth-800 text-earth-600 dark:text-earth-400'
+                          }`}>
+                            {isPeerTransfer ? <ArrowRightLeft size={16} /> : isRegRequest ? <UserPlus size={16} /> : <Info size={16} />}
                           </div>
                           
                           <div className="flex-1 min-w-0">
@@ -177,7 +273,7 @@ export function Header({ onMenuClick, title }: HeaderProps) {
                               <h4 className="text-xs font-bold text-earth-800 dark:text-earth-100 truncate">
                                 {notification.title}
                               </h4>
-                              {!notification.is_read && !isPending && (
+                              {!notification.is_read && !isRegPending && !isPeerPending && (
                                 <button 
                                   onClick={() => handleRead(notification.id)}
                                   title="Marcar como lida"
@@ -187,12 +283,84 @@ export function Header({ onMenuClick, title }: HeaderProps) {
                                 </button>
                               )}
                             </div>
-                            <p className="text-xs text-earth-600 dark:text-earth-400 mt-1 break-words">
+                            <p className="text-xs text-earth-600 dark:text-earth-400 mt-1 break-words leading-relaxed">
                               {notification.message}
                             </p>
                             
-                            {/* Se for solicitação de cadastro pendente, mostra botões de ação para admins */}
-                            {isRegRequest && isPending && user?.is_staff && (
+                            {/* Ações interativas para Transferência P2P Recebida */}
+                            {isPeerTransfer && isPeerPending && isReceiver && (
+                              <div className="mt-3 p-3 bg-blue-50/60 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900/40 rounded-2xl space-y-2.5">
+                                <div>
+                                  <label className="block text-[10px] font-bold text-blue-900 dark:text-blue-300 mb-1 flex items-center gap-1">
+                                    <Wallet size={12} /> Escolha a conta para depositar:
+                                  </label>
+                                  <select
+                                    value={selectedAccounts[notification.peer_transfer!] || (userAccounts[0]?.id || '')}
+                                    onChange={(e) => setSelectedAccounts(prev => ({
+                                      ...prev,
+                                      [notification.peer_transfer!]: e.target.value
+                                    }))}
+                                    className="w-full px-2.5 py-1.5 text-xs font-bold rounded-xl border border-blue-200 dark:border-blue-800 bg-white dark:bg-earth-900 text-earth-800 dark:text-earth-200 outline-none focus:ring-2 focus:ring-blue-500"
+                                  >
+                                    {userAccounts.map(acc => (
+                                      <option key={acc.id} value={acc.id}>
+                                        {acc.name}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </div>
+
+                                <div className="flex gap-2 pt-0.5">
+                                  <button
+                                    onClick={() => handleAcceptTransfer(notification.peer_transfer!)}
+                                    disabled={actionLoadingId !== null}
+                                    className="flex-1 py-2 px-3 bg-forest-600 hover:bg-forest-700 disabled:opacity-50 text-white rounded-xl text-[11px] font-bold transition-all flex items-center justify-center gap-1 cursor-pointer shadow-xs"
+                                  >
+                                    {actionLoadingId === notification.peer_transfer ? (
+                                      <Loader2 size={12} className="animate-spin" />
+                                    ) : (
+                                      <CheckCircle2 size={13} />
+                                    )}
+                                    <span>Aceitar e Creditar</span>
+                                  </button>
+
+                                  <button
+                                    onClick={() => handleRejectTransfer(notification.peer_transfer!)}
+                                    disabled={actionLoadingId !== null}
+                                    className="py-2 px-3 bg-red-100 hover:bg-red-200 dark:bg-red-950/40 dark:hover:bg-red-900/60 text-red-700 dark:text-red-300 disabled:opacity-50 rounded-xl text-[11px] font-bold transition-colors flex items-center justify-center gap-1 cursor-pointer"
+                                  >
+                                    {actionLoadingId === notification.peer_transfer ? (
+                                      <Loader2 size={12} className="animate-spin" />
+                                    ) : (
+                                      <XCircle size={13} />
+                                    )}
+                                    <span>Recusar</span>
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Status de Transferência já resolvida */}
+                            {isPeerTransfer && !isPeerPending && peerDetail && (
+                              <div className="mt-2 flex items-center gap-1 text-[10px] font-bold">
+                                {peerDetail.status === 'ACCEPTED' ? (
+                                  <span className="text-forest-600 dark:text-forest-400 flex items-center gap-0.5">
+                                    <CheckCircle2 size={11} /> Transferência Aceita
+                                  </span>
+                                ) : peerDetail.status === 'REJECTED' ? (
+                                  <span className="text-red-500 flex items-center gap-0.5">
+                                    <XCircle size={11} /> Transferência Recusada
+                                  </span>
+                                ) : (
+                                  <span className="text-earth-400 flex items-center gap-0.5">
+                                    Cancelada
+                                  </span>
+                                )}
+                              </div>
+                            )}
+
+                            {/* Se for solicitação de cadastro pendente, mostra botões para admins */}
+                            {isRegRequest && isRegPending && user?.is_staff && (
                               <div className="flex gap-2 mt-3">
                                 <button
                                   onClick={() => handleApprove(notification.registration_request!)}
@@ -221,8 +389,7 @@ export function Header({ onMenuClick, title }: HeaderProps) {
                               </div>
                             )}
 
-                            {/* Mostrar badges de status caso já resolvidos */}
-                            {isRegRequest && !isPending && regDetail && (
+                            {isRegRequest && !isRegPending && regDetail && (
                               <div className="mt-2 flex items-center gap-1 text-[10px] font-bold">
                                 {regDetail.status === 'APPROVED' ? (
                                   <span className="text-forest-600 dark:text-forest-400 flex items-center gap-0.5">

@@ -14,17 +14,19 @@
   --color-forest-800: var(--primary-800);
   --color-forest-900: var(--primary-900);
 
-  --color-earth-50: #fbfaf9;
-  --color-earth-100: #f5f4f1;
-  --color-earth-200: #e8e5df;
-  --color-earth-300: #d4cfc4;
-  --color-earth-400: #bcb4a3;
-  --color-earth-500: #a39783;
-  --color-earth-600: #897d6a;
-  --color-earth-700: #726758;
-  --color-earth-800: #5e5549;
-  --color-earth-900: #4d463d;
-  --color-earth-950: #292520;
+  /* Paleta Neutra Refinada: Deep Slate / Obsidian para Dark Mode Ultra Elegante */
+  --color-earth-50: #f8fafc;
+  --color-earth-100: #f1f5f9;
+  --color-earth-200: #e2e8f0;
+  --color-earth-300: #cbd5e1;
+  --color-earth-400: #94a3b8;
+  --color-earth-500: #64748b;
+  --color-earth-600: #475569;
+  --color-earth-700: #252f44;
+  --color-earth-800: #111624;
+  --color-earth-850: #0c101a;
+  --color-earth-900: #080c14;
+  --color-earth-950: #04060a;
 }
 
 @layer base {
@@ -65,19 +67,20 @@
   }
   
   ::-webkit-scrollbar-thumb {
-    background: var(--primary-300);
+    background: var(--primary-400);
     border-radius: 9999px;
     transition: background 0.3s ease;
+    opacity: 0.5;
   }
   
   ::-webkit-scrollbar-thumb:hover {
-    background: var(--primary-500);
+    background: var(--primary-600);
   }
 
   /* Suporte para Firefox */
   * {
     scrollbar-width: thin;
-    scrollbar-color: var(--primary-300) transparent;
+    scrollbar-color: var(--primary-400) transparent;
   }
 }
 

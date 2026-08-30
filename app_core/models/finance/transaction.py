@@ -48,10 +48,25 @@ class Transaction(models.Model):
     # Parcelas futuras ficam como False até chegarem ao mês vigente.
     balance_applied = models.BooleanField(default=False)
 
+    created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True, blank=True)
+
     class Meta:
         verbose_name = 'Transaction'
         verbose_name_plural = 'Transactions'
         ordering = ['-date']
+        indexes = [
+            models.Index(fields=['user', 'date']),
+            models.Index(fields=['account', 'date']),
+            models.Index(fields=['installment_id_group']),
+            models.Index(fields=['user', 'category']),
+        ]
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(amount__gt=0),
+                name='transaction_amount_positive'
+            )
+        ]
 
     def __str__(self):
         return self.description

@@ -19,6 +19,9 @@ class RegistrationRequest(models.Model):
     class Meta:
         db_table = 'registration_requests'
         ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['status', '-created_at']),
+        ]
 
     def __str__(self):
         return f"{self.username} ({self.status})"

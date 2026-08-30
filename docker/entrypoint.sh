@@ -3,6 +3,9 @@
 # Exit immediately if a command exits with a non-zero status
 set -e
 
+# Ensure data and staticfiles folders exist
+mkdir -p /app/data /app/staticfiles
+
 echo "==> Running database migrations..."
 python manage.py migrate --noinput
 

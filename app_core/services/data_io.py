@@ -263,10 +263,13 @@ class FinanceDataService:
 
         count = 0
         with db_transaction.atomic():
-            for tx in tx_qs.select_related('account', 'to_account'):
+            tx_list = list(tx_qs.select_related('account', 'to_account'))
+            count = len(tx_list)
+            for tx in tx_list:
                 TransactionService._reverse_balance(tx)
-                tx.delete()
-                count += 1
+            
+            if count > 0:
+                tx_qs.delete()
 
         logger.info(
             'Delete bulk: user=%s removidos=%d year=%s month=%s contas=%s',

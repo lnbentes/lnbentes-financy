@@ -54,6 +54,10 @@ export default defineConfig(({ mode }) => {
           target: apiTarget,
           changeOrigin: true,
         },
+        '/portal-admin': {
+          target: apiTarget,
+          changeOrigin: true,
+        },
         '/static': {
           target: apiTarget,
           changeOrigin: true,

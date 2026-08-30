@@ -57,7 +57,7 @@ class FinanceService:
         return FinanceService.get_monthly_summary(user, today.year, today.month)
 
     @staticmethod
-    def get_pending_installments_for_account(account_id: int) -> dict:
+    def get_pending_installments_for_account(account_id) -> dict:
         """Retorna o total das parcelas futuras e o número de meses até a última."""
         today = date.today()
         pending_qs = Transaction.objects.filter(
