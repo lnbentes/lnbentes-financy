@@ -62,6 +62,8 @@ export function TransactionModal() {
   const [error, setError] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showSimpleDeleteConfirm, setShowSimpleDeleteConfirm] = useState(false);
+  const [showUpdateConfirm, setShowUpdateConfirm] = useState(false);
+  const [pendingPayload, setPendingPayload] = useState<Partial<Transaction> | null>(null);
   const [isInstallmentManagerOpen, setIsInstallmentManagerOpen] = useState(false);
 
   const isEdit = !!selectedTransaction;
@@ -79,7 +81,7 @@ export function TransactionModal() {
         setAmount(selectedTransaction.amount?.toString() || '');
         setType(selectedTransaction.type || 'EXPENSE');
         setMethod(selectedTransaction.method || 'DEBIT');
-        setDate(selectedTransaction.date || todayStr);
+        setDate(selectedTransaction.purchase_date || selectedTransaction.date || todayStr);
         setAccount(selectedTransaction.account || '');
         setCategory(selectedTransaction.category || '');
         setToAccount(selectedTransaction.to_account || '');
@@ -100,6 +102,8 @@ export function TransactionModal() {
       setError('');
       setShowDeleteConfirm(false);
       setShowSimpleDeleteConfirm(false);
+      setShowUpdateConfirm(false);
+      setPendingPayload(null);
     }
   }, [isTransactionModalOpen, selectedTransaction, accounts, categories, todayStr]);
 
@@ -198,6 +202,7 @@ export function TransactionModal() {
 
     if (isTransfer) {
       payload.installments = 1;
+      payload.method = 'PIX';
       payload.to_account = toAccount || null;
       if (!payload.to_account) {
         setError('Selecione a conta destino para a transferência.');
@@ -219,18 +224,36 @@ export function TransactionModal() {
       }
     }
 
+    if (isEdit && selectedTransaction?.installment_id_group) {
+      setPendingPayload(payload);
+      setShowUpdateConfirm(true);
+      setLoading(false);
+      return;
+    }
+
+    await executeSave(false, payload);
+  };
+
+  const executeSave = async (updateAll = false, explicitPayload?: Partial<Transaction> & { installments?: number }) => {
+    const dataToSend = explicitPayload || pendingPayload;
+    if (!dataToSend) return;
+
     try {
+      setLoading(true);
       if (isEdit && selectedTransaction) {
-        await financeService.transactions.update(selectedTransaction.id, payload);
+        await financeService.transactions.update(selectedTransaction.id, dataToSend, updateAll);
       } else {
-        await financeService.transactions.create(payload);
+        await financeService.transactions.create(dataToSend);
       }
       await loadData();
       setTransactionModalOpen(false);
+      setShowUpdateConfirm(false);
+      setPendingPayload(null);
     } catch (err: unknown) {
       const errObj = err as Error;
       Logger.error('Erro ao salvar transação:', errObj);
       setError(errObj.message || 'Erro ao salvar transação');
+      setShowUpdateConfirm(false);
     } finally {
       setLoading(false);
     }
@@ -240,6 +263,57 @@ export function TransactionModal() {
   const parsedNumAmount = parseFloat(amount.replace(',', '.')) || 0;
   const numInstallments = parseInt(installments, 10) || 1;
   const installmentValue = parsedNumAmount > 0 && numInstallments > 1 ? parsedNumAmount / numInstallments : 0;
+
+  // Renderizar modal de confirmação de edição de parcelamento
+  if (showUpdateConfirm && selectedTransaction) {
+    return (
+      <Modal 
+        isOpen={isTransactionModalOpen} 
+        onClose={() => setShowUpdateConfirm(false)} 
+        title="Editar Compra Parcelada"
+      >
+        <div className="text-center py-4 space-y-4 animate-in fade-in duration-200">
+          <div className="p-3 bg-blue-50 dark:bg-blue-950/30 text-blue-800 dark:text-blue-300 rounded-2xl text-xs border border-blue-200 dark:border-blue-900/40 max-w-md mx-auto">
+            Esta transação faz parte de um parcelamento (parcela {selectedTransaction.installment_current}/{selectedTransaction.installment_total}).
+          </div>
+          
+          <h3 className="text-sm font-bold text-earth-800 dark:text-earth-100">
+            Como você deseja aplicar estas alterações?
+          </h3>
+          <p className="text-xs text-earth-500 max-w-xs mx-auto">
+            Você pode alterar apenas esta parcela individualmente ou sincronizar o valor e deslocar as datas de todas as parcelas deste grupo.
+          </p>
+          
+          <div className="flex flex-col gap-2 max-w-xs mx-auto pt-2">
+            <button
+              type="button"
+              onClick={() => executeSave(false)}
+              disabled={loading}
+              className="py-3 px-4 bg-earth-100 hover:bg-earth-200 dark:bg-earth-800 dark:hover:bg-earth-700 text-earth-800 dark:text-earth-200 rounded-2xl font-bold text-xs transition-colors cursor-pointer"
+            >
+              {loading ? 'Salvando...' : 'Salvar apenas nesta parcela'}
+            </button>
+            <button
+              type="button"
+              onClick={() => executeSave(true)}
+              disabled={loading}
+              className="py-3 px-4 bg-forest-600 hover:bg-forest-700 text-white rounded-2xl font-bold text-xs transition-colors cursor-pointer shadow-md shadow-forest-600/20"
+            >
+              {loading ? 'Salvando...' : 'Aplicar a todas as parcelas'}
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowUpdateConfirm(false)}
+              disabled={loading}
+              className="py-2.5 px-4 text-earth-500 hover:text-earth-700 dark:text-earth-400 font-semibold text-xs transition-colors cursor-pointer"
+            >
+              Voltar
+            </button>
+          </div>
+        </div>
+      </Modal>
+    );
+  }
 
   // Renderizar modal de exclusão de parcelamento
   if (showDeleteConfirm && selectedTransaction) {
@@ -419,7 +493,7 @@ export function TransactionModal() {
           <div>
             <div className="flex items-center justify-between mb-1">
               <label className="block text-xs font-semibold text-earth-700 dark:text-earth-300">
-                Data do Lançamento
+                {method === 'CREDIT' && !isTransfer ? 'Data da Compra *' : 'Data do Lançamento *'}
               </label>
               <div className="flex gap-1.5">
                 <button
@@ -451,6 +525,12 @@ export function TransactionModal() {
                 className="w-full px-4 py-2.5 rounded-2xl border border-earth-200 dark:border-earth-700 bg-earth-50 dark:bg-earth-800 text-xs font-medium outline-none focus:ring-2 focus:ring-forest-500 cursor-pointer"
               />
             </div>
+            {method === 'CREDIT' && !isTransfer && (
+              <p className="text-[11px] text-purple-600 dark:text-purple-400 mt-1.5 flex items-center gap-1 font-medium bg-purple-50/60 dark:bg-purple-950/30 p-2 rounded-xl border border-purple-200 dark:border-purple-900/40">
+                <CreditCard size={13} className="shrink-0 text-purple-600 dark:text-purple-400" />
+                <span>Cobrança computada na fatura do mês seguinte (mês +1).</span>
+              </p>
+            )}
           </div>
 
           {/* Seletor de Modalidade de Transferência (Entre Contas vs Outro Usuário) */}

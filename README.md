@@ -119,6 +119,7 @@ A aplicação conta com um **Portal Administrativo Dedicado** para gestão opera
 ### 1️⃣ Inicializando o Backend (Django)
 
 1. **Crie e ative o ambiente virtual:**
+
    - No Windows (PowerShell):
      ```powershell
      python -m venv venv
@@ -130,21 +131,26 @@ A aplicação conta com um **Portal Administrativo Dedicado** para gestão opera
      source venv/bin/activate
      ```
 2. **Instale as dependências:**
+
    ```bash
    pip install -r requirements.txt
    ```
 3. **Execute as migrações:**
+
    ```bash
    python manage.py migrate
    ```
 4. **Popule com dados iniciais de teste (opcional):**
+
    ```bash
    python manage.py seed_data
    ```
 5. **Inicie o servidor:**
+
    ```bash
    python manage.py runserver
    ```
+
    *Servidor rodando em: `http://localhost:8000`*
 
 ---
@@ -154,20 +160,24 @@ A aplicação conta com um **Portal Administrativo Dedicado** para gestão opera
 Abra um **segundo terminal**:
 
 1. **Acesse a pasta do frontend:**
+
    ```bash
    cd front
    ```
 2. **Instale as dependências:**
+
    ```bash
    npm install
    ```
 3. **Inicie o servidor de desenvolvimento (Vite):**
+
    ```bash
    npm run dev
    ```
-   *Frontend disponível em: `http://localhost:5173`*
 
+   *Frontend disponível em: `http://localhost:5173`*
 4. **Para gerar a build de produção do PWA:**
+
    ```bash
    npm run build
    ```

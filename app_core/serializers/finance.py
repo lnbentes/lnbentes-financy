@@ -66,6 +66,8 @@ class TransactionSerializer(serializers.ModelSerializer):
     account_color = serializers.CharField(source='account.color', read_only=True)
     account_icon = serializers.CharField(source='account.icon', read_only=True)
     to_account_name = serializers.CharField(source='to_account.name', read_only=True, allow_null=True)
+    method = serializers.ChoiceField(choices=Transaction.METHOD_CHOICES, required=False, default='PIX')
+    purchase_date = serializers.DateField(required=False, allow_null=True)
     # Campo write-only para indicar quantas parcelas criar
     installments = serializers.IntegerField(write_only=True, required=False, min_value=1, max_value=60, default=1)
 
@@ -73,7 +75,7 @@ class TransactionSerializer(serializers.ModelSerializer):
         model = Transaction
         fields = [
             'id', 'description', 'amount', 'type', 'method',
-            'category', 'account', 'to_account', 'date',
+            'category', 'account', 'to_account', 'date', 'purchase_date',
             'installment_current', 'installment_total', 'installment_id_group',
             'balance_applied',
             'category_name', 'category_color', 'category_icon',
@@ -117,6 +119,8 @@ class TransactionSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError({'to_account': 'Conta de destino é obrigatória para transferências.'})
             if account and to_account and account.id == to_account.id:
                 raise serializers.ValidationError({'to_account': 'A conta de origem e destino não podem ser iguais.'})
+            if not attrs.get('method'):
+                attrs['method'] = 'PIX'
 
         return attrs
 
@@ -156,13 +160,15 @@ class RecurringTransactionSerializer(serializers.ModelSerializer):
     account_name = serializers.CharField(source='account.name', read_only=True)
     account_color = serializers.CharField(source='account.color', read_only=True)
 
+    month_of_year = serializers.IntegerField(required=False, allow_null=True, min_value=1, max_value=12)
+
     class Meta:
         model = RecurringTransaction
         fields = [
             'id', 'description', 'amount', 'type', 'method',
             'category', 'category_name', 'category_icon', 'category_color',
             'account', 'account_name', 'account_color',
-            'frequency', 'day_of_month', 'is_active', 'last_processed_date',
+            'frequency', 'day_of_month', 'month_of_year', 'is_active', 'last_processed_date',
             'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'last_processed_date', 'created_at', 'updated_at']
@@ -180,6 +186,15 @@ class RecurringTransactionSerializer(serializers.ModelSerializer):
         user = request.user if request and hasattr(request, 'user') else None
         account = attrs.get('account') or (self.instance.account if self.instance else None)
         category = attrs.get('category') or (self.instance.category if self.instance else None)
+        frequency = attrs.get('frequency') or (self.instance.frequency if self.instance else 'MONTHLY')
+        month_of_year = attrs.get('month_of_year')
+
+        if frequency == 'YEARLY':
+            if not month_of_year and not (self.instance and self.instance.month_of_year):
+                attrs['month_of_year'] = 1
+        elif frequency != 'YEARLY':
+            attrs['month_of_year'] = None
+
         if user and user.is_authenticated:
             if account and account.user != user:
                 raise serializers.ValidationError({'account': 'Conta não pertence ao usuário autenticado.'})

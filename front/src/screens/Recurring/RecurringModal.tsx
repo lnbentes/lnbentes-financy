@@ -12,6 +12,21 @@ interface RecurringModalProps {
   selectedRecurring: RecurringTransaction | null;
 }
 
+const MONTHS_OPTIONS = [
+  { value: 1, label: 'Janeiro' },
+  { value: 2, label: 'Fevereiro' },
+  { value: 3, label: 'Março' },
+  { value: 4, label: 'Abril' },
+  { value: 5, label: 'Maio' },
+  { value: 6, label: 'Junho' },
+  { value: 7, label: 'Julho' },
+  { value: 8, label: 'Agosto' },
+  { value: 9, label: 'Setembro' },
+  { value: 10, label: 'Outubro' },
+  { value: 11, label: 'Novembro' },
+  { value: 12, label: 'Dezembro' },
+];
+
 export function RecurringModal({
   isOpen,
   onClose,
@@ -28,6 +43,7 @@ export function RecurringModal({
   const [categoryId, setCategoryId] = useState('');
   const [frequency, setFrequency] = useState<RecurringFrequency>('MONTHLY');
   const [dayOfMonth, setDayOfMonth] = useState(1);
+  const [monthOfYear, setMonthOfYear] = useState(new Date().getMonth() + 1);
   const [isActive, setIsActive] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -46,6 +62,7 @@ export function RecurringModal({
         setCategoryId(selectedRecurring.category || '');
         setFrequency(selectedRecurring.frequency);
         setDayOfMonth(selectedRecurring.day_of_month);
+        setMonthOfYear(selectedRecurring.month_of_year || new Date().getMonth() + 1);
         setIsActive(selectedRecurring.is_active);
       } else {
         setDescription('');
@@ -55,6 +72,7 @@ export function RecurringModal({
         setCategoryId('');
         setFrequency('MONTHLY');
         setDayOfMonth(1);
+        setMonthOfYear(new Date().getMonth() + 1);
         setIsActive(true);
       }
       setError('');
@@ -102,6 +120,7 @@ export function RecurringModal({
       category: categoryId || null,
       frequency,
       day_of_month: Number(dayOfMonth),
+      month_of_year: frequency === 'YEARLY' ? Number(monthOfYear) : null,
       is_active: isActive,
     };
 
@@ -183,12 +202,12 @@ export function RecurringModal({
               required
               value={description}
               onChange={e => setDescription(e.target.value)}
-              placeholder="Ex: Netflix, Aluguel, Salário, Internet..."
+              placeholder="Ex: Netflix, Aluguel, Salário, Internet, Seguro Anual..."
               className="w-full px-4 py-2.5 rounded-xl border border-earth-200 dark:border-earth-700 bg-earth-50 dark:bg-earth-800 text-sm outline-none focus:ring-2 focus:ring-forest-500"
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className={`grid ${frequency === 'YEARLY' ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-2'} gap-3`}>
             <div>
               <label className="block text-xs font-semibold text-earth-700 dark:text-earth-300 mb-1">
                 Valor (R$) *
@@ -206,7 +225,7 @@ export function RecurringModal({
             </div>
             <div>
               <label className="block text-xs font-semibold text-earth-700 dark:text-earth-300 mb-1">
-                Dia do Vencimento (1-31)
+                Dia do Vencimento (1-31) *
               </label>
               <input
                 type="number"
@@ -218,6 +237,25 @@ export function RecurringModal({
                 className="w-full px-4 py-2.5 rounded-xl border border-earth-200 dark:border-earth-700 bg-earth-50 dark:bg-earth-800 text-sm outline-none focus:ring-2 focus:ring-forest-500"
               />
             </div>
+            {frequency === 'YEARLY' && (
+              <div>
+                <label className="block text-xs font-semibold text-purple-700 dark:text-purple-300 mb-1">
+                  Mês da Cobrança *
+                </label>
+                <select
+                  value={monthOfYear}
+                  onChange={e => setMonthOfYear(Number(e.target.value))}
+                  required
+                  className="w-full px-3 py-2.5 rounded-xl border border-purple-300 dark:border-purple-700 bg-purple-50/50 dark:bg-purple-950/30 text-xs font-bold outline-none focus:ring-2 focus:ring-purple-500 cursor-pointer text-purple-900 dark:text-purple-200"
+                >
+                  {MONTHS_OPTIONS.map(m => (
+                    <option key={m.value} value={m.value}>
+                      {m.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-3">

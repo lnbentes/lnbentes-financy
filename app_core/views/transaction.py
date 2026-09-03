@@ -72,7 +72,13 @@ class TransactionViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         validated = dict(serializer.validated_data)
         validated.pop('installments', None)  # ignorado em edição
-        updated = TransactionService.update_transaction(instance, validated)
+
+        update_all = (
+            str(request.query_params.get('update_all', '')).lower() == 'true' or
+            bool(request.data.get('update_all', False))
+        )
+
+        updated = TransactionService.update_transaction(instance, validated, update_all=update_all)
         return Response(self.get_serializer(updated).data)
 
     @extend_schema(

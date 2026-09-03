@@ -22,13 +22,25 @@ def process_recurring_transactions(user=None, target_date=None):
     processed_count = 0
     created_transactions = []
 
-    for item in qs:
-        # Verifica se já foi processado no mesmo mês e ano
-        if item.last_processed_date and item.last_processed_date.year == target_date.year and item.last_processed_date.month == target_date.month:
-            continue
+    import calendar
 
-        # Se o dia de vencimento for maior que os dias do mês, ajusta para o último dia do mês
-        day = min(item.day_of_month, 28)
+    for item in qs:
+        # Se for recorrência anual: só processa se o mês atual for o mês de cobrança configurado
+        if item.frequency == 'YEARLY':
+            target_month = item.month_of_year or 1
+            if target_date.month != target_month:
+                continue
+            # Verifica se já foi processada neste mesmo ano
+            if item.last_processed_date and item.last_processed_date.year == target_date.year:
+                continue
+        else:
+            # Frequência mensal (ou padrão): verifica se já foi processada no mesmo mês e ano
+            if item.last_processed_date and item.last_processed_date.year == target_date.year and item.last_processed_date.month == target_date.month:
+                continue
+
+        # Ajusta dia do mês para o último dia válido daquele mês se necessário
+        last_day = calendar.monthrange(target_date.year, target_date.month)[1]
+        day = min(item.day_of_month, last_day)
         tx_date = date(target_date.year, target_date.month, day)
 
         with transaction.atomic():

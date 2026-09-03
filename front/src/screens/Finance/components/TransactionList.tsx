@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Search, Plus, TrendingUp, ArrowRightLeft, Trash2, Edit2, X, Zap } from 'lucide-react';
+import { Search, Plus, TrendingUp, ArrowRightLeft, Trash2, Edit2, X, Zap, CreditCard } from 'lucide-react';
 import { useFinance } from '../FinanceContext';
 import { formatBRL, formatDate } from '../../../utils/format';
 import { financeService } from '../../../services/finance';
@@ -183,7 +183,14 @@ export function TransactionList() {
                         {t.description}
                       </h4>
                       <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-earth-500 mt-0.5">
-                        <span>{formatDate(t.date)}</span>
+                        {t.purchase_date ? (
+                          <span className="inline-flex items-center gap-1 text-purple-700 dark:text-purple-300 font-semibold bg-purple-50 dark:bg-purple-950/40 px-1.5 py-0.5 rounded-md border border-purple-200 dark:border-purple-900/40">
+                            <CreditCard size={11} className="shrink-0" />
+                            <span>Compra: {formatDate(t.purchase_date)} • Fatura: {formatDate(t.date)}</span>
+                          </span>
+                        ) : (
+                          <span>{formatDate(t.date)}</span>
+                        )}
                         <span>•</span>
                         <span className="truncate max-w-[120px]">
                           {isTransfer ? `${t.account_name} ➔ ${t.to_account_name || '?'}` : t.account_name}

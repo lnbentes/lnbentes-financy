@@ -14,11 +14,11 @@ export const transactionsService = {
   create: async (data: Partial<Transaction> & { installments?: number }): Promise<Transaction[]> => {
     return api.post('/api/transactions/', data);
   },
-  update: async (id: string, data: Partial<Transaction>): Promise<Transaction> => {
-    return api.put(`/api/transactions/${id}/`, data);
+  update: async (id: string, data: Partial<Transaction>, updateAll = false): Promise<Transaction> => {
+    return api.put(`/api/transactions/${id}/`, data, { params: { update_all: updateAll } });
   },
-  patch: async (id: string, data: Partial<Transaction>): Promise<Transaction> => {
-    return api.patch(`/api/transactions/${id}/`, data);
+  patch: async (id: string, data: Partial<Transaction>, updateAll = false): Promise<Transaction> => {
+    return api.patch(`/api/transactions/${id}/`, data, { params: { update_all: updateAll } });
   },
   delete: async (id: string, deleteAll = false): Promise<void> => {
     return api.delete(`/api/transactions/${id}/`, { params: { delete_all: deleteAll } });

@@ -97,25 +97,54 @@ class TransactionService:
             tx.balance_applied = False
             logger.debug('Saldo revertido: tx=%s tipo=%s valor=%s', tx.id, tx.type, tx.amount)
 
+    @staticmethod
+    def _add_months(base_date, months_to_add):
+        import calendar
+        total_months = base_date.month - 1 + months_to_add
+        y = base_date.year + total_months // 12
+        m = total_months % 12 + 1
+        last_day = calendar.monthrange(y, m)[1]
+        day = min(base_date.day, last_day)
+        return base_date.replace(year=y, month=m, day=day)
+
     # ── CRUD com controle de saldo ────────────────────────────────────────────
 
     @staticmethod
     def create_with_installments(user, data, installments=1):
         """Cria uma transação simples (ou N parcelas) e aplica o saldo imediatamente
-        apenas nas parcelas cujo mês já chegou (padrão bancário BR)."""
+        apenas nas parcelas cujo mês já chegou (padrão bancário BR).
+        Para compras no cartão de CRÉDITO, a cobrança ocorre no mês seguinte (mês + 1),
+        registrando a data da compra em purchase_date e a data de cobrança em date."""
         installments = int(installments or 1)
         tx_type = data.get('type', 'EXPENSE')
+        tx_method = data.get('method', 'DEBIT')
 
         # Transferências não suportam parcelamento
         if tx_type == 'TRANSFER':
             installments = 1
             # Método é opcional para transferências — usa PIX como padrão brasileiro
             data.setdefault('method', 'PIX')
+            tx_method = data['method']
+
+        base_date = data['date']
+        is_credit = (tx_method == 'CREDIT')
+
+        if is_credit:
+            # Em compras no crédito, base_date informada é a data da compra
+            purchase_date = data.get('purchase_date') or base_date
+        else:
+            purchase_date = data.get('purchase_date')
 
         if installments <= 1:
+            if is_credit:
+                data['purchase_date'] = purchase_date
+                # Cobrança no mês seguinte (+1 mês)
+                data['date'] = TransactionService._add_months(purchase_date, 1)
+
             transaction = Transaction.objects.create(user=user, **data)
             TransactionService._apply_balance(transaction)
-            logger.info('Transação criada: id=%s user=%s', transaction.id, user.id)
+            logger.info('Transação criada: id=%s user=%s (crédito=%s, compra=%s, cobrança=%s)', 
+                        transaction.id, user.id, is_credit, transaction.purchase_date, transaction.date)
             return [transaction]
 
         total_amount = Decimal(str(data['amount']))
@@ -123,19 +152,15 @@ class TransactionService:
         remainder = total_amount - (installment_value * installments)
 
         group_id = str(uuid.uuid4())
-        base_date = data['date']
 
         created = []
         for i in range(installments):
-            total_months = base_date.month - 1 + i
-            y = base_date.year + total_months // 12
-            m = total_months % 12 + 1
-            try:
-                installment_date = base_date.replace(year=y, month=m)
-            except ValueError:
-                import calendar
-                last_day = calendar.monthrange(y, m)[1]
-                installment_date = base_date.replace(year=y, month=m, day=last_day)
+            if is_credit:
+                # 1ª parcela cobrada no mês + 1, 2ª no mês + 2, etc.
+                installment_date = TransactionService._add_months(purchase_date, i + 1)
+            else:
+                # 1ª parcela no próprio mês da compra, 2ª no mês + 1, etc.
+                installment_date = TransactionService._add_months(base_date, i)
 
             amount = installment_value + (remainder if i == 0 else Decimal('0'))
             t = Transaction.objects.create(
@@ -143,10 +168,11 @@ class TransactionService:
                 description=data['description'],
                 amount=amount,
                 type=data['type'],
-                method=data.get('method', 'DEBIT'),
+                method=tx_method,
                 category=data.get('category'),
                 account=data.get('account'),
                 date=installment_date,
+                purchase_date=purchase_date if is_credit else None,
                 installment_current=i + 1,
                 installment_total=installments,
                 installment_id_group=group_id,
@@ -155,14 +181,101 @@ class TransactionService:
             TransactionService._apply_balance(t)
             created.append(t)
 
-        logger.info('%d parcelas criadas (grupo=%s) user=%s', installments, group_id, user.id)
+        logger.info('%d parcelas criadas (grupo=%s) user=%s (crédito=%s)', installments, group_id, user.id, is_credit)
         return created
 
     @staticmethod
-    def update_transaction(instance, data):
-        """Edita uma transação revertendo o efeito antigo e aplicando o novo."""
-        # Reverte o efeito da transação antes de alterar os dados
+    def update_transaction(instance, data, update_all=False):
+        """
+        Edita uma transação revertendo o efeito antigo e aplicando o novo.
+        Se update_all=True e a transação pertencer a um grupo de parcelas,
+        atualiza todas as parcelas do mesmo grupo:
+        - O novo valor é aplicado a todas as parcelas;
+        - A alteração na data desloca cronologicamente todas as parcelas pelo mesmo delta de meses/dias;
+        - Descrição, categoria, conta e método são sincronizados em todas as parcelas.
+        """
+        import calendar
+
+        group_id = instance.installment_id_group
+
+        if update_all and group_id:
+            old_date = instance.date
+            old_purchase_date = instance.purchase_date
+
+            target_data = dict(data)
+            method = target_data.get('method', instance.method)
+
+            if method == 'CREDIT':
+                if 'date' in target_data:
+                    purchase_date = target_data.get('purchase_date') or target_data['date']
+                    installment_current = instance.installment_current or 1
+                    target_data['purchase_date'] = purchase_date
+                    target_data['date'] = TransactionService._add_months(purchase_date, installment_current)
+            elif 'method' in target_data and target_data['method'] != 'CREDIT':
+                target_data['purchase_date'] = None
+
+            new_date = target_data.get('date', old_date)
+            new_purchase_date = target_data.get('purchase_date')
+
+            # Diferença de meses e novo dia
+            delta_months = (new_date.year - old_date.year) * 12 + (new_date.month - old_date.month)
+            new_day = new_date.day
+
+            group_txs = list(Transaction.objects.filter(installment_id_group=group_id))
+
+            with db_transaction.atomic():
+                for tx in group_txs:
+                    TransactionService._reverse_balance(tx)
+
+                    # Atualiza campos comuns
+                    for field in ['description', 'amount', 'type', 'method', 'category', 'account', 'to_account']:
+                        if field in target_data:
+                            setattr(tx, field, target_data[field])
+
+                    # Deslocamento da data
+                    if delta_months != 0 or new_day != old_date.day:
+                        total_m = tx.date.month - 1 + delta_months
+                        y = tx.date.year + total_m // 12
+                        m = total_m % 12 + 1
+                        last_day = calendar.monthrange(y, m)[1]
+                        d = min(new_day, last_day)
+                        tx.date = date(y, m, d)
+
+                    # Data de compra se for crédito
+                    if method == 'CREDIT' and new_purchase_date:
+                        if old_purchase_date and tx.purchase_date:
+                            p_delta_months = (new_purchase_date.year - old_purchase_date.year) * 12 + (new_purchase_date.month - old_purchase_date.month)
+                            p_new_day = new_purchase_date.day
+                            p_total_m = tx.purchase_date.month - 1 + p_delta_months
+                            p_y = tx.purchase_date.year + p_total_m // 12
+                            p_m = p_total_m % 12 + 1
+                            p_last_day = calendar.monthrange(p_y, p_m)[1]
+                            p_d = min(p_new_day, p_last_day)
+                            tx.purchase_date = date(p_y, p_m, p_d)
+                        else:
+                            tx.purchase_date = new_purchase_date
+                    elif 'method' in target_data and target_data['method'] != 'CREDIT':
+                        tx.purchase_date = None
+
+                    tx.save()
+                    TransactionService._apply_balance(tx)
+
+            instance.refresh_from_db()
+            logger.info('Grupo de parcelas atualizado (%d parcelas): grupo=%s user=%s', len(group_txs), group_id, instance.user_id)
+            return instance
+
+        # Atualização individual
         TransactionService._reverse_balance(instance)
+
+        method = data.get('method', instance.method)
+        if method == 'CREDIT':
+            if 'date' in data:
+                purchase_date = data.get('purchase_date') or data['date']
+                installment_current = instance.installment_current or 1
+                data['purchase_date'] = purchase_date
+                data['date'] = TransactionService._add_months(purchase_date, installment_current)
+        elif 'method' in data and data['method'] != 'CREDIT':
+            data['purchase_date'] = None
 
         for attr, value in data.items():
             setattr(instance, attr, value)
@@ -235,6 +348,7 @@ class TransactionService:
                     'description': t.description,
                     'amount': float(t.amount),
                     'date': t.date.isoformat(),
+                    'purchase_date': t.purchase_date.isoformat() if t.purchase_date else None,
                     'installment_current': t.installment_current,
                     'installment_total': t.installment_total,
                     'is_paid': t.date <= today,
@@ -244,6 +358,7 @@ class TransactionService:
             result.append({
                 'group_id': group_id,
                 'description': first_tx.description,
+                'purchase_date': first_tx.purchase_date.isoformat() if first_tx.purchase_date else None,
                 'account_id': str(first_tx.account_id) if first_tx.account_id else None,
                 'account_name': first_tx.account.name if first_tx.account else 'Sem Conta',
                 'account_color': first_tx.account.color if first_tx.account else '#888',

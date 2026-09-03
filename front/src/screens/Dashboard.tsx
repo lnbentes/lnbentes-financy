@@ -27,6 +27,7 @@ import { financeService } from '../services/finance';
 import { formatBRL } from '../utils/format';
 import { extractArray, getOffsetMonth } from '../utils/helpers';
 import { Logger } from '../utils/logger';
+import { InstallmentGanttChart } from '../components/dashboard/InstallmentGanttChart';
 import type { Account, MonthlySummary, BudgetSummary, RecurringTransaction } from '../types/finance';
 
 ChartJS.register(
@@ -293,7 +294,11 @@ export function Dashboard() {
                 <div key={rec.id} className="flex items-center justify-between p-3 rounded-xl bg-earth-50/60 dark:bg-earth-800/40 border border-earth-100 dark:border-earth-800 text-xs">
                   <div>
                     <div className="font-bold text-earth-900 dark:text-earth-100">{rec.description}</div>
-                    <div className="text-[11px] text-earth-500">Vencimento todo dia {rec.day_of_month}</div>
+                    <div className="text-[11px] text-earth-500">
+                      {rec.frequency === 'YEARLY' && rec.month_of_year
+                        ? `Vencimento todo dia ${rec.day_of_month} de ${MONTHS_PT[rec.month_of_year - 1]}`
+                        : `Vencimento todo dia ${rec.day_of_month}`}
+                    </div>
                   </div>
                   <strong className={rec.type === 'INCOME' ? 'text-forest-600' : 'text-red-500'}>
                     {formatBRL(rec.amount)}
@@ -330,6 +335,9 @@ export function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* Gráfico de Gantt de Compras Parceladas */}
+      <InstallmentGanttChart />
     </div>
   );
 }

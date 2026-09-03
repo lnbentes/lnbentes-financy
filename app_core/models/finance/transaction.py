@@ -38,6 +38,7 @@ class Transaction(models.Model):
         blank=True,
     )
     date = models.DateField()
+    purchase_date = models.DateField(null=True, blank=True)
     user = models.ForeignKey('auth.User', on_delete=models.CASCADE)
 
     installment_current = models.IntegerField(null=True, blank=True)

@@ -20,6 +20,11 @@ import { ConfirmModal } from '../../components/common/ConfirmModal';
 import { RecurringModal } from './RecurringModal';
 import type { RecurringTransaction } from '../../types/finance';
 
+const MONTHS_NAMES = [
+  'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+];
+
 export function Recurring() {
   const [recurrings, setRecurrings] = useState<RecurringTransaction[]>([]);
   const [loading, setLoading] = useState(true);
@@ -234,7 +239,10 @@ export function Recurring() {
                         <h4 className="font-bold text-sm text-earth-900 dark:text-earth-100">{rec.description}</h4>
                         <div className="flex flex-wrap items-center gap-2 text-xs text-earth-500 mt-0.5">
                           <span className="flex items-center gap-1">
-                            <Calendar size={12} /> Dia {rec.day_of_month}
+                            <Calendar size={12} />
+                            {rec.frequency === 'YEARLY' && rec.month_of_year
+                              ? `Todo dia ${rec.day_of_month} de ${MONTHS_NAMES[rec.month_of_year - 1]}`
+                              : `Todo dia ${rec.day_of_month}`}
                           </span>
                           <span>•</span>
                           <span className="flex items-center gap-1">

@@ -41,6 +41,7 @@ export interface Transaction {
   to_account?: string | null;
   to_account_name?: string | null;
   date: string;
+  purchase_date?: string | null;
   installment_current?: number | null;
   installment_total?: number | null;
   installment_id_group?: string | null;
@@ -90,6 +91,7 @@ export interface RecurringTransaction {
   account_color?: string;
   frequency: RecurringFrequency;
   day_of_month: number;
+  month_of_year?: number | null;
   is_active: boolean;
   last_processed_date?: string | null;
   created_at?: string;
@@ -143,6 +145,7 @@ export interface InstallmentItem {
   description: string;
   amount: number;
   date: string;
+  purchase_date?: string | null;
   installment_current: number;
   installment_total: number;
   is_paid: boolean;
@@ -152,6 +155,7 @@ export interface InstallmentItem {
 export interface InstallmentGroup {
   group_id: string;
   description: string;
+  purchase_date?: string | null;
   account_id?: string | null;
   account_name?: string;
   account_color?: string;

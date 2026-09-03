@@ -45,6 +45,12 @@ class RecurringTransaction(models.Model):
         validators=[MinValueValidator(1), MaxValueValidator(31)],
         help_text="Dia do mês programado para o vencimento/lançamento."
     )
+    month_of_year = models.IntegerField(
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(1), MaxValueValidator(12)],
+        help_text="Mês do ano para cobrança anual (1-12)."
+    )
     is_active = models.BooleanField(default=True)
     last_processed_date = models.DateField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
