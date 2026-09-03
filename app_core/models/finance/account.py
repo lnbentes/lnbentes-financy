@@ -12,6 +12,7 @@ class Account(models.Model):
         ('WALLET', 'Carteira'),
         ('INVESTMENT', 'Investimento'),
         ('CREDIT', 'Cartão de Crédito'),
+        ('OTHER', 'Outros'),
     ]
 
     user = models.ForeignKey(

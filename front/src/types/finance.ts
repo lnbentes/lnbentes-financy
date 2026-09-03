@@ -1,6 +1,6 @@
 export type TransactionType = 'INCOME' | 'EXPENSE' | 'TRANSFER';
 export type PaymentMethod = 'CREDIT' | 'DEBIT' | 'CASH' | 'PIX' | 'INSTALLMENT' | 'BOLETO';
-export type AccountType = 'BANK' | 'WALLET' | 'INVESTMENT' | 'CREDIT';
+export type AccountType = 'BANK' | 'WALLET' | 'INVESTMENT' | 'CREDIT' | 'OTHER';
 export type CategoryType = 'INCOME' | 'EXPENSE' | 'BOTH';
 export type RecurringFrequency = 'MONTHLY' | 'WEEKLY' | 'YEARLY';
 export type BudgetStatus = 'OK' | 'WARNING' | 'EXCEEDED';

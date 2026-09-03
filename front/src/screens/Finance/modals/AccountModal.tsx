@@ -3,9 +3,10 @@ import { useFinance } from '../FinanceContext';
 import { financeService } from '../../../services/finance';
 import { Modal } from './Modal';
 import { ConfirmModal } from '../../../components/common/ConfirmModal';
-import { Trash2, Wallet } from 'lucide-react';
+import { Trash2, Wallet, Dices } from 'lucide-react';
 import { Logger } from '../../../utils/logger';
 import { ACCOUNT_ICONS, getIconComponent } from '../../../utils/icons';
+import { getRandomColor } from '../../../utils/helpers';
 import type { AccountType, Account } from '../../../types/finance';
 
 export function AccountModal() {
@@ -159,14 +160,24 @@ export function AccountModal() {
                 type="color" 
                 value={color}
                 onChange={e => setColor(e.target.value)}
-                className="w-10 h-10 p-0.5 rounded-xl border border-earth-200 dark:border-earth-700 bg-transparent cursor-pointer"
+                className="w-10 h-10 p-0.5 rounded-xl border border-earth-200 dark:border-earth-700 bg-transparent cursor-pointer shrink-0"
               />
-              <input
-                type="text"
-                value={color}
-                onChange={e => setColor(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-earth-200 dark:border-earth-700 bg-earth-50 dark:bg-earth-800 text-xs font-mono font-bold uppercase"
-              />
+              <div className="relative flex-1 flex items-center">
+                <input
+                  type="text"
+                  value={color}
+                  onChange={e => setColor(e.target.value)}
+                  className="w-full pl-3 pr-9 py-2 rounded-xl border border-earth-200 dark:border-earth-700 bg-earth-50 dark:bg-earth-800 text-xs font-mono font-bold uppercase outline-none focus:ring-2 focus:ring-forest-500"
+                />
+                <button
+                  type="button"
+                  onClick={() => setColor(getRandomColor(color))}
+                  title="Randomizar cor"
+                  className="absolute right-1.5 p-1 text-earth-400 hover:text-earth-700 dark:hover:text-earth-200 hover:bg-earth-200/50 dark:hover:bg-earth-700/50 rounded-lg transition-colors cursor-pointer"
+                >
+                  <Dices size={15} />
+                </button>
+              </div>
             </div>
           </div>
 

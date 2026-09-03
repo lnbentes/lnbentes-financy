@@ -53,62 +53,211 @@ bash scripts/start_nanopi.sh
 
 ---
 
-### Opção B: Configuração Permanente de Produção (Nginx + Systemd)
+### Opção B: Configuração Permanente de Produção (Nginx + Systemd) 🌟 *(Recomendado)*
 
-Esta é a configuração recomendada para que o sistema rode em segundo plano e reinicie automaticamente em caso de queda de energia:
+Esta é a configuração definitiva para produção. Com ela:
+- O **Nginx** atua como *Reverse Proxy* de alta performance, servindo os arquivos do Frontend (`dist/`) e estáticos diretamente, sem consumir memória Python, e repassando requisições de API para o Django.
+- O **Systemd** gerencia o processo do Django/Gunicorn em segundo plano (*daemon*), garantindo **reinicialização automática** caso a placa reinicie ou ocorra queda de energia.
 
-#### 1. Instalar e Configurar o Nginx
-```bash
-sudo apt update && sudo apt install -y nginx
+---
 
-# Copiar a configuração do site
-sudo cp /home/lnb/AppFinanceiro/scripts/nginx_appfinanceiro.conf /etc/nginx/sites-available/appfinanceiro
+#### 📋 Etapa 1: Preparar o Ambiente Python e Banco de Dados
 
-# Ativar o site e remover o padrão
-sudo ln -sf /etc/nginx/sites-available/appfinanceiro /etc/nginx/sites-enabled/
-sudo rm -f /etc/nginx/sites-enabled/default
+Antes de ativar o serviço permanente, precisamos garantir que o ambiente virtual (`venv`), as dependências, as tabelas do banco SQLite e os arquivos estáticos estejam devidamente preparados:
 
-# Testar e recarregar o Nginx
-sudo nginx -t
-sudo systemctl reload nginx
-```
+1. **Instalar pacotes base do sistema (se ainda não instalados):**
+   ```bash
+   sudo apt update
+   sudo apt install -y python3-venv python3-pip nginx
+   ```
 
-#### 2. Configurar o Serviço do Backend (Systemd)
-```bash
-# Copiar o arquivo de serviço
-sudo cp /home/lnb/AppFinanceiro/scripts/appfinanceiro.service /etc/systemd/system/
+2. **Criar o ambiente virtual e instalar dependências:**
+   ```bash
+   cd /home/lnb/AppFinanceiro
 
-# Recarregar os daemons do sistema
-sudo systemctl daemon-reload
+   # Criar venv nativo ARM
+   python3 -m venv venv
 
-# Ativar no boot e iniciar o serviço
-sudo systemctl enable appfinanceiro
-sudo systemctl start appfinanceiro
-```
+   # Ativar venv
+   source venv/bin/activate
+
+   # Instalar dependências sem cache (economiza RAM e memória flash)
+   pip install --upgrade pip --no-cache-dir
+   pip install -r requirements.txt --no-cache-dir
+   pip install gunicorn --no-cache-dir
+   ```
+
+3. **Aplicar migrações do banco e coletar arquivos estáticos:**
+   ```bash
+   # Aplica a estrutura de tabelas no SQLite
+   python manage.py migrate --noinput
+
+   # Coleta arquivos CSS/JS do Admin Django para a pasta staticfiles/
+   python manage.py collectstatic --noinput
+   ```
+
+4. **(Opcional) Criar usuário Administrador do Django:**
+   ```bash
+   python manage.py createsuperuser
+   ```
+
+---
+
+#### ⚙️ Etapa 2: Configurar o Serviço do Backend no Systemd
+
+O Systemd cuidará de manter o Gunicorn sempre ativo.
+
+1. **Copiar o arquivo de serviço para a pasta do sistema:**
+   ```bash
+   sudo cp /home/lnb/AppFinanceiro/scripts/appfinanceiro.service /etc/systemd/system/
+   ```
+
+2. **Entenda o que este serviço faz (`appfinanceiro.service`):**
+   * **`User=lnb` / `Group=lnb`**: Executa a aplicação com o usuário padrão não-root (mais seguro).
+   * **`ExecStart`**: Roda o Gunicorn apontando para o binário do `venv` (`/home/lnb/AppFinanceiro/venv/bin/gunicorn`).
+   * **`--workers 2 --threads 2 --worker-class gthread`**: Otimização máxima para 256MB/512MB RAM.
+   * **`--bind 127.0.0.1:8000`**: O Django escuta internamente em localhost (apenas o Nginx fala com ele).
+   * **`Restart=always` / `RestartSec=5s`**: Se o processo cair por qualquer motivo, o Linux o reinicia em 5 segundos.
+
+3. **Recarregar o Systemd para reconhecer o novo serviço:**
+   ```bash
+   sudo systemctl daemon-reload
+   ```
+
+4. **Habilitar no boot e iniciar o serviço:**
+   ```bash
+   sudo systemctl enable --now appfinanceiro
+   ```
+
+5. **Verificar se o backend subiu com sucesso:**
+   ```bash
+   sudo systemctl status appfinanceiro
+   ```
+   > 💡 **O que esperar:** O status deve mostrar `Active: active (running)` em verde com os logs dos workers Gunicorn iniciados.
+
+---
+
+#### 🌐 Etapa 3: Configurar o Nginx como Servidor Web e Proxy Reverso
+
+O Nginx vai receber todas as conexões externas na porta 80.
+
+1. **Copiar a configuração do site para o Nginx:**
+   ```bash
+   sudo cp /home/lnb/AppFinanceiro/scripts/nginx_appfinanceiro.conf /etc/nginx/sites-available/appfinanceiro
+   ```
+
+2. **Ativar o site criando o link simbólico:**
+   ```bash
+   sudo ln -sf /etc/nginx/sites-available/appfinanceiro /etc/nginx/sites-enabled/
+   ```
+
+3. **Desativar a página padrão de boas-vindas do Nginx (para liberar a porta 80):**
+   ```bash
+   sudo rm -f /etc/nginx/sites-enabled/default
+   ```
+
+4. **Testar se a sintaxe do arquivo de configuração está perfeita:**
+   ```bash
+   sudo nginx -t
+   ```
+   > 💡 **O que esperar:** `syntax is ok` e `test is successful`. Se houver erro, revise o arquivo de configuração.
+
+5. **Aplicar as alterações e reiniciar o Nginx:**
+   ```bash
+   sudo systemctl restart nginx
+   ```
+
+---
+
+#### ✅ Etapa 4: Validação e Testes no Navegador
+
+Agora seu servidor está 100% configurado e operante! Abra o navegador no seu computador ou celular conectado na mesma rede:
+
+| URL de Acesso | O que deve abrir |
+| :--- | :--- |
+| `http://<IP_DO_NANOPI>/` | **Frontend React (SPA)** compilado e servido com resposta instantânea. |
+| `http://<IP_DO_NANOPI>/api/` | **Django REST API** respondendo através do proxy reverso. |
+| `http://<IP_DO_NANOPI>/admin/` | **Painel Administrativo do Django** com CSS/estáticos carregando normalmente. |
 
 ---
 
 ## 🔍 Comandos Úteis de Manutenção no NanoPi
 
-* **Ver status do backend:**
+Guarde estes comandos para o dia a dia e manutenção do servidor:
+
+* **Ver status do backend (Django/Gunicorn):**
   ```bash
   sudo systemctl status appfinanceiro
   ```
 
-* **Acompanhar logs em tempo real:**
+* **Acompanhar logs do backend em tempo real:**
   ```bash
   sudo journalctl -u appfinanceiro -f
   ```
 
-* **Reiniciar o backend:**
+* **Reiniciar o backend (após atualizações de código backend):**
   ```bash
   sudo systemctl restart appfinanceiro
   ```
 
-* **Recarregar o Nginx:**
+* **Verificar status do Nginx:**
   ```bash
-  sudo systemctl reload nginx
+  sudo systemctl status nginx
   ```
+
+* **Acompanhar logs de erro do Nginx:**
+  ```bash
+  sudo tail -f /var/log/nginx/error.log
+  ```
+
+* **Recarregar o Nginx (após alterar `nginx_appfinanceiro.conf`):**
+  ```bash
+  sudo nginx -t && sudo systemctl reload nginx
+  ```
+
+* **Monitorar consumo de RAM da placa em tempo real:**
+  ```bash
+  htop
+  # ou
+  free -h
+  ```
+
+---
+
+## 🛠️ Guia de Solução de Problemas Comuns (Troubleshooting)
+
+### 1. Erro `502 Bad Gateway` no Navegador
+- **Causa:** O Nginx está rodando, mas não consegue falar com o Django na porta `127.0.0.1:8000`.
+- **Solução:** Verifique o status do backend:
+  ```bash
+  sudo systemctl status appfinanceiro
+  ```
+  Se estiver com erro (`failed`), veja os logs detalhados:
+  ```bash
+  sudo journalctl -u appfinanceiro -n 50 --no-pager
+  ```
+
+### 2. Erro `403 Forbidden` ao acessar a página inicial
+- **Causa:** O Nginx não tem permissão para ler a pasta `/home/lnb/AppFinanceiro/dist`.
+- **Solução:** Ajuste as permissões de leitura das pastas:
+  ```bash
+  chmod o+x /home/lnb
+  chmod -R o+rX /home/lnb/AppFinanceiro/dist
+  ```
+
+### 3. Alterei o código no computador e enviei de novo, como atualizar?
+- Execute no seu computador:
+  ```bash
+  bash scripts/deploy_to_nanopi.sh
+  ```
+- E na placa, se alterou arquivos Python ou banco de dados:
+  ```bash
+  cd /home/lnb/AppFinanceiro
+  source venv/bin/activate
+  python manage.py migrate --noinput
+  sudo systemctl restart appfinanceiro
+  ```
+  *(Se alterou apenas o frontend, o Nginx serve os novos arquivos de `dist/` imediatamente, bastando dar um Ctrl+F5 no navegador).*
 
 ---
 
